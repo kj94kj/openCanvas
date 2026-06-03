@@ -21,7 +21,6 @@ import cauCapstone.openCanvas.rdb.repository.ContentRepository;
 import cauCapstone.openCanvas.rdb.repository.CoverRepository;
 import cauCapstone.openCanvas.rdb.repository.LikeRepository;
 import cauCapstone.openCanvas.rdb.repository.UserRepository;
-import cauCapstone.openCanvas.recommend.service.RecommendService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -33,7 +32,6 @@ public class ContentService {
 	private final LikeRepository likeRepository;
 	private final UserRepository userRepository;
 	private final CommentLikeRepository commentLikeRepository;
-	private final RecommendService recommendService;
 	
 	// ! 유저필요
 	// coverId를 받아서 Content를 리턴하는 메소드, Content가 없으면 새로 저장한다.
@@ -62,8 +60,6 @@ public class ContentService {
 		    contentRepository.save(conWithComments);	
 	    }
 	    
-	    // 추천 서버에 유저 조회 기록 전송
-	    recommendService.createUserView(user.getId(), conWithComments.getId());
 	    
 	    // 좋아요 갯수를 찾음.
 	    int likeNum = contentRepository.countLikesById(conWithComments.getId());
@@ -110,15 +106,12 @@ public class ContentService {
             if (existingLike.getLiketype() == newLikeType) {
                 likeRepository.delete(existingLike);
                 
-                recommendService.deleteUserLike(user.getId(), contentId);
-                
                 return existingLike.getContent().getCover().getId();
             }
 
             // 2. 다른 타입을 누른 경우 → 기존 삭제 후 새로 생성
             likeRepository.delete(existingLike);
-            
-            recommendService.deleteUserLike(user.getId(), contentId);
+
         }
 
         // 3. 아무것도 없거나 다른 거 눌렀던 경우 → 새로운 Like 저장
@@ -129,11 +122,6 @@ public class ContentService {
         newLike.setLiketype(newLikeType);
 
         likeRepository.save(newLike);
-        
-        // newLikeType이 LIKE일 때만 추천 서버에 등록
-        if (newLikeType == LikeType.LIKE) {
-            recommendService.createUserLike(user.getId(), contentId);
-        }
         
         return content.getCover().getId();
     }

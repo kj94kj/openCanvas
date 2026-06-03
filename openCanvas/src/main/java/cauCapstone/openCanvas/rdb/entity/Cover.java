@@ -17,6 +17,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 // 캔버스 표지에 대한 엔티티
+// cover은 글을 쓰려는 시점에, content는 글을 쓴 시점에 처음으로 저장된다. 
+// 깊게 생각 안하면 cover, content 분리를 안해도 되지만 만약 글을 쓴 시점에 저장을 하게되면 글을 쓰는 중간에
+// 똑같은 roomId를 쓸 가능성이 있기 때문에 미리 cover를 저장하게됬다.
 @NoArgsConstructor
 @Setter
 @Getter
@@ -46,6 +49,7 @@ public class Cover {
 	private String roomId;
 	
 	@Column(name = "cover_limit")
+	
 	private Integer limit;
 	
 	public Cover(String title, String coverImageUrl, LocalDateTime time, Integer limit) {

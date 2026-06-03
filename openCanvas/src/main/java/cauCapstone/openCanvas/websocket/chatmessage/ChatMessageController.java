@@ -18,13 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ChatMessageController {
 
 	private final RedisEditPublisher redisPublisher;
-    
-	// 테스트용 
-	/*
-	private final RedisMessageListenerContainer redisMessageListener; 
-	private final RedisPublisher tempPublisher;
-    private final RedisSubscriber redisSubscriber; // 구독 처리 서비스
-    */
 
 
     // @MessageMapping을 통해서 웹소켓으로 들어오는 메시지 발행을 처리한다.
@@ -50,20 +43,6 @@ public class ChatMessageController {
             // 클라이언트가 보낸 메시지인데 EDIT가 아니면 위조 의심 → 차단
         	// subscribe/ unsubscribe 상황에서는 ChatController에서 메시지를 보내는 것이 아닌 직접 보내는거라 EDIT 외엔 오류라고 판단한다.
         	
-        	/*
-        	// 테스트용. 지워야함 
-        	
-        	boolean isEditor = redisPublisher.testEditPublish(new ChannelTopic(message.getRoomId()), message);
-        	
-        	log.info("isEditor: "+isEditor);
-        	
-        	if(isEditor) {
-                redisMessageListener.addMessageListener(redisSubscriber, new ChannelTopic(message.getRoomId()));  
-            	tempPublisher.publish(new ChannelTopic(message.getRoomId()), message);
-        	}
-        	*/
-        	
-        	// 주석을 걸면 테스트용.
             throw new IllegalArgumentException("허용되지 않은 메시지 타입");
         }
      

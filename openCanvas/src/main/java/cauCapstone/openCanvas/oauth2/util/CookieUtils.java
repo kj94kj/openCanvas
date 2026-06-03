@@ -1,5 +1,6 @@
 package cauCapstone.openCanvas.oauth2.util;
 
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,12 @@ public class CookieUtils {
     }
 
     public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        System.out.println("=== addCookie 호출 ===");
+        System.out.println("name = " + name);
+        System.out.println("value length = " + (value == null ? 0 : value.length()));
+        System.out.println("maxAge = " + maxAge);
+
+    	
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);

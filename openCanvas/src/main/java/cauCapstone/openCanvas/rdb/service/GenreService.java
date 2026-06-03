@@ -15,7 +15,6 @@ import cauCapstone.openCanvas.rdb.repository.ContentRepository;
 import cauCapstone.openCanvas.rdb.repository.CoverRepository;
 import cauCapstone.openCanvas.rdb.repository.GenreRepository;
 import cauCapstone.openCanvas.rdb.repository.WritingRepository;
-import cauCapstone.openCanvas.recommend.service.RecommendService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +27,6 @@ public class GenreService {
     private final ContentRepository contentRepository;
     private final CoverRepository coverRepository;
     private final WritingRepository writingRepository;
-    private final RecommendService recommendService;
 
     @Transactional
 	public List<String> setGenre(String email, List<String> genres, Long contentId) {
@@ -51,9 +49,6 @@ public class GenreService {
                     Genre newGenre = new Genre();
                     newGenre.setName(genreName);
                     Genre g = genreRepository.save(newGenre);
-                    
-                    // 새로운장르 태그추가
-                    recommendService.createTag(g.getId());
                     
                     return g;
                 });

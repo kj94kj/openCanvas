@@ -41,10 +41,19 @@ public class StompHandler implements ChannelInterceptor{
         	
         	// TODO: 프론트에서는 bearer 붙이지 않고 전달한다.
             try {
-                Claims claims = jwtTokenizer.verifySignature(accessor.getFirstNativeHeader("token"), base64EncodedSecretKey);
-                String subject = claims.getSubject();
-                String sessionId = accessor.getSessionId();
-                sessionRegistryService.registerSession(sessionId, subject);
+            	String rawToken = accessor.getFirstNativeHeader("token");
+            	if (rawToken != null && rawToken.startsWith("Bearer ")) {
+            	    rawToken = rawToken.substring(7); // "Bearer " 잘라내기
+            	}
+
+            	// null 체크하고 검증
+            	if (rawToken != null && !rawToken.isBlank()) {
+            	    Claims claims = jwtTokenizer.verifySignature(rawToken, base64EncodedSecretKey);
+            	    String subject = claims.getSubject();
+            	    String sessionId = accessor.getSessionId();
+                	// null 체크하고 검증
+            	    sessionRegistryService.registerSession(sessionId, subject);
+            	}
             } catch (Exception e) {
                 log.error("Error while verifying token", e);
             }

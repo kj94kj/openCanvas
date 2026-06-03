@@ -1,6 +1,5 @@
 	package cauCapstone.openCanvas.oauth2.handler;
 
-import cauCapstone.openCanvas.recommend.service.RecommendService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,12 +41,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final UserRepository userRepository;
     private final OAuth2UserUnlinkManager oAuth2UserUnlinkManager;
     private final JwtTokenizer jwtTokenizer;
-    private final RecommendService recommendService;
 
     // determineTargetUrl 메소드로 로그인을 하는건지 회원탈퇴를 하는건지 판단한 뒤 targetUrl로 리다이렉트 한다.
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
+    	
+    	log.info("OAuth2 SuccessHandler 진입");
 
         String targetUrl;
 
@@ -98,7 +98,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 User newUser = new User(email, email, Role.USER);
                 user = userRepository.save(newUser);
                 // 추천서버 요청 (유저 생성)
-                recommendService.createUser(user.getId());
+                // recommendService.createUser(user.getId());
             }
         	
             // 서비스 자체 서버에서 액세스 토큰, 리프레시 토큰을 발급한다.
@@ -118,7 +118,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         		String refreshToken = jwtTokenizer.generateAndStoreRefreshToken(
         			principal.getUserInfo().getEmail(),
         			new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7) // 7일짜리 Refresh Token
-        		);	
+        		);
+        		
+        		
+        		log.info(" 토큰 발급 완료 - accessToken={}, refreshToken={}",
+        			    accessToken.substring(0, 10),
+        			    refreshToken.substring(0, 10)
+        			);
         		
         	/*
             log.info("email={}, name={}, nickname={}, accessToken={}", principal.getUserInfo().getEmail(),
@@ -146,9 +152,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         		    .orElseGet(() -> {
         		    	throw new IllegalArgumentException("회원탈퇴할 유저를 찾을 수 없습니다.");
         		    });
-            
-            // 추천서버 요청 (유저 삭제)
-            recommendService.deleteUser(user.getId()); // 제거 전에 요청먼저
             
         	userRepository.delete(user); // 삭제
             

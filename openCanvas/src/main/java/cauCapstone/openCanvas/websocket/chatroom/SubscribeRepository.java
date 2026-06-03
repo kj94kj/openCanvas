@@ -116,12 +116,12 @@ public class SubscribeRepository {
 
     // 락 설정 (편집자 subject 기준) !테스트
     public void setLock(String roomId, String subject) {
-        redisTemplate.opsForValue().set(getLockKey(roomId), subject, Duration.ofMinutes(30));
+        redisTemplate.opsForValue().set(getLockKey(roomId), subject, Duration.ofMinutes(2));
     }
 
     // 락 TTL 갱신
     public void extendLock(String roomId, String subject) {
-        redisTemplate.opsForValue().set(getLockKey(roomId), subject, Duration.ofMinutes(30));
+        redisTemplate.opsForValue().set(getLockKey(roomId), subject, Duration.ofMinutes(2));
     }
     
 

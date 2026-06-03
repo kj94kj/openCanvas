@@ -28,6 +28,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+    	
+        String requestURI = request.getRequestURI();
+        if (requestURI.equals("/auth/refresh")) {
+            filterChain.doFilter(request, response); // 통과시킴
+            return;
+        }
+    	
+    	
         String token = resolveToken(request);
 
         if (token != null) {
@@ -37,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String role = claims.get("role", String.class);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        email, null, Collections.singletonList(new SimpleGrantedAuthority(role))  // 권한이 있으면 GrantedAuthority로 넣기
+                        email, null, Collections.singletonList(new SimpleGrantedAuthority(role)) // 권한이 있으면 GrantedAuthority로 넣기
                 );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
