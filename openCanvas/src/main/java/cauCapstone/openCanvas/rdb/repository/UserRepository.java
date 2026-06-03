@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	
 	// 좋아요를 누른 커버만 반환
 	@Query("""
-		    select new cauCapstone.openCanvas.rdb.dto.LikedCoverResponseDto(
+		    select new cauCapstone.openCanvas.rdb.dto.MyLikedCoverResponseDto(
 		        cover.id,
 		        content.id,
 		        cover.title,
@@ -26,17 +26,17 @@ public interface UserRepository extends JpaRepository<User, Long>{
 		        cover.roomType,
 		        content.view,
 		        (
-		            select count(likeEntity.id)
-		            from ContentLike likeEntity
-		            where likeEntity.content.id = content.id
+		            select count(l.id)
+		            from Like l
+		            where l.content.id = content.id
 		        ),
 		        cover.time
 		    )
-		    from ContentLike l
+		    from Like l
 		    join l.content content
 		    join content.cover cover
 		    where l.user.id = :userId
-		          and l.likeType = :likeType
+		          and l.liketype = :likeType
 		""")
 		List<MyLikedCoverResponseDto> findLikedCoversByUserId(@Param("userId") Long userId,@Param("likeType") LikeType likeType);
 	

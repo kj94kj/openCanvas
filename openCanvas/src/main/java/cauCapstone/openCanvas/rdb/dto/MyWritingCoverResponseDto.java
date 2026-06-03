@@ -2,9 +2,18 @@ package cauCapstone.openCanvas.rdb.dto;
 
 import java.time.LocalDateTime;
 
+import cauCapstone.openCanvas.rdb.entity.Role;
 import cauCapstone.openCanvas.rdb.entity.RoomType;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 // 내가 쓴 글 목록을 보여줄때 쓰는 dto.
+@Getter 
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MyWritingCoverResponseDto {
     private Long coverId;
     private Long contentId;
@@ -16,25 +25,4 @@ public class MyWritingCoverResponseDto {
     private LocalDateTime coverTime;
     private Long myWritingCount;
 
-    public MyWritingCoverResponseDto(
-            Long coverId,
-            Long contentId,
-            String title,
-            String coverImageUrl,
-            RoomType roomType,
-            int view,
-            Long likeCount,
-            LocalDateTime coverTime,
-            Long myWritingCount
-    ) {
-        this.coverId = coverId;
-        this.contentId = contentId;
-        this.title = title;
-        this.coverImageUrl = coverImageUrl;
-        this.roomType = roomType;
-        this.view = view;
-        this.likeCount = likeCount;
-        this.coverTime = coverTime;
-        this.myWritingCount = myWritingCount;
-    }
 }

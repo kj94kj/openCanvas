@@ -66,9 +66,9 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
 		        cover.roomType,
 		        content.view,
 		        (
-		            select count(likeEntity.id)
-		            from ContentLike likeEntity
-		            where likeEntity.content.id = content.id
+		            select count(l.id)
+		            from Like l
+		            where l.content.id = content.id
 		        ),
 		        cover.time,
 		        count(writing.id)

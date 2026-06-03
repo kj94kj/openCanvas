@@ -2,8 +2,17 @@ package cauCapstone.openCanvas.rdb.dto;
 
 import java.time.LocalDateTime;
 
+import cauCapstone.openCanvas.rdb.entity.Role;
 import cauCapstone.openCanvas.rdb.entity.RoomType;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter 
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MyLikedCoverResponseDto {
     private Long coverId;
     private Long contentId;
@@ -14,23 +23,4 @@ public class MyLikedCoverResponseDto {
     private Long likeCount;
     private LocalDateTime coverTime;
 
-    public MyLikedCoverResponseDto(
-            Long coverId,
-            Long contentId,
-            String title,
-            String coverImageUrl,
-            RoomType roomType,
-            int view,
-            Long likeCount,
-            LocalDateTime coverTime
-    ) {
-        this.coverId = coverId;
-        this.contentId = contentId;
-        this.title = title;
-        this.coverImageUrl = coverImageUrl;
-        this.roomType = roomType;
-        this.view = view;
-        this.likeCount = likeCount;
-        this.coverTime = coverTime;
-    }
 }

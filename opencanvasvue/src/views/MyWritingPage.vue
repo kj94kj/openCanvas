@@ -1,0 +1,83 @@
+<template>
+  <div>
+    <h1>내가 쓴 글</h1>
+
+    <div
+      v-for="cover in writings"
+      :key="cover.coverId"
+      class="card"
+    >
+      <img
+        v-if="cover.coverImageUrl"
+        :src="cover.coverImageUrl"
+        class="cover-image"
+        @click="openContent(cover.coverId)"
+      />
+
+      <h3>{{ cover.title }}</h3>
+      <p>방 타입: {{ cover.roomType }}</p>
+      <p>조회수: {{ cover.view }}</p>
+      <p>좋아요: {{ cover.likeCount }}</p>
+      <p>내가 쓴 글 수: {{ cover.myWritingCount }}</p>
+      <p>생성일: {{ formatDate(cover.coverTime) }}</p>
+    </div>
+
+    <p v-if="writings.length === 0">내가 쓴 글이 없습니다.</p>
+    <p v-if="errorMessage">{{ errorMessage }}</p>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+
+const writings = ref([])
+const errorMessage = ref('')
+
+onMounted(() => {
+  getMyWritings()
+})
+
+async function getMyWritings() {
+  try {
+    const token = localStorage.getItem('accessToken')
+
+    const response = await fetch('http://localhost:8080/api/users/writings', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('내가 쓴 글 조회 실패')
+    }
+
+    writings.value = await response.json()
+  } catch (error) {
+    errorMessage.value = error.message
+  }
+}
+
+function formatDate(dateText) {
+  if (!dateText) return ''
+  return new Date(dateText).toLocaleString()
+}
+
+function openContent(coverId) {
+  console.log('나중에 작품 보기:', coverId)
+}
+</script>
+
+<style scoped>
+.card {
+  border: 1px solid #ddd;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+
+.cover-image {
+  width: 160px;
+  height: 100px;
+  object-fit: cover;
+}
+</style>
