@@ -14,10 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.dto.MyLikedCoverResponseDto;
+import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.UserDto;
+import cauCapstone.openCanvas.rdb.dto.UserResponseDto;
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.User;
 import cauCapstone.openCanvas.rdb.service.UserService;
+import cauCapstone.openCanvas.rdb.service.WritingService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 	
     private final UserService userService;
+    private final WritingService writingService;
 
     // 유저의 색상을 변경하는 API
     @PutMapping("/color")
@@ -49,7 +54,7 @@ public class UserController {
     @GetMapping("/likes")
     @Operation(summary = "유저가 좋아요한 coverDto 반환", description = "유저가 좋아요한 coverDto 반환, "
     		+ "좋아요 누른 작품을 찾을 수 있다")
-    public ResponseEntity<List<CoverDto>> getLikedContents() {
+    public ResponseEntity<List<MyLikedCoverResponseDto>> getLikedContents() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
@@ -57,14 +62,14 @@ public class UserController {
         }
 
         String email = (String) auth.getPrincipal();
-        List<CoverDto> likedContents = userService.getLikeContents(email);
+        List<MyLikedCoverResponseDto> result = userService.getMyLikedCovers(email);
 
-        return ResponseEntity.ok(likedContents);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/")
     @Operation(summary = "현재 유저 정보", description = "현재 로그인한 userDto가 반환됨")
-    public ResponseEntity<UserDto> getUserInfo() {
+    public ResponseEntity<UserResponseDto> getUserInfo() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
@@ -75,5 +80,20 @@ public class UserController {
         return userService.getUser(email)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+    
+    @GetMapping("/writings")
+    public ResponseEntity<List<MyWritingCoverResponseDto>> getMyWritingCovers() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        String email = (String) auth.getPrincipal();
+
+        List<MyWritingCoverResponseDto> result = writingService.getMyWritingCovers(email);
+
+        return ResponseEntity.ok(result);
     }
 }

@@ -7,9 +7,12 @@ import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.dto.MyLikedCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.UserDto;
+import cauCapstone.openCanvas.rdb.dto.UserResponseDto;
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Cover;
+import cauCapstone.openCanvas.rdb.entity.LikeType;
 import cauCapstone.openCanvas.rdb.entity.Role;
 import cauCapstone.openCanvas.rdb.entity.User;
 import cauCapstone.openCanvas.rdb.repository.UserRepository;
@@ -38,29 +41,22 @@ public class UserService {
         user.setColor(color);
         
     	return userRepository.save(user); 
-    	}
+    }
 	
 	// ! 유저필요
 	// id로 유저엔티티 반환
-    public Optional<UserDto> getUser(String email) { 
+    public Optional<UserResponseDto> getUser(String email) { 
     	
         return userRepository.findByEmail(email)
-                .map((user) -> UserDto.fromEntity(user));
-    	}
+                .map((user) -> UserResponseDto.fromEntity(user));
+    }
 	
     // ! 유저필요
 	// 유저가 좋아요한 content 반환
-    public List<CoverDto> getLikeContents(String email){
+    public List<MyLikedCoverResponseDto> getMyLikedCovers(String email){
         User user = userRepository.findByEmail(email)
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
     	
-    	List<Cover> covers = userRepository.findCoversLikedByUserId(user.getId());
-    	
-        return covers.stream()
-                .map(cover -> {
-                    Long contentId = cover.getContent() != null ? cover.getContent().getId() : null;
-                    return CoverDto.fromEntity(cover, contentId);
-                })
-                .toList();
+    	return userRepository.findLikedCoversByUserId(user.getId(), LikeType.LIKE);
     }
 }

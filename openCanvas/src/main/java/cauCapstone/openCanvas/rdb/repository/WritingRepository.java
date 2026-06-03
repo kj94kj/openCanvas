@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.entity.Writing;
 
@@ -54,4 +55,29 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
 	List<Writing> findAllByParent(Writing parent);
 	
 	List<Writing> findAllByContent_Title(String title);
+	
+	// 내가 쓴 글의 목록을 보여줌.
+	@Query("""
+		    select new cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto(
+		        cover.id,
+		        content.id,
+		        cover.title,
+		        cover.coverImageUrl,
+		        cover.roomType,
+		        content.view,
+		        (
+		            select count(likeEntity.id)
+		            from ContentLike likeEntity
+		            where likeEntity.content.id = content.id
+		        ),
+		        cover.time,
+		        count(writing.id)
+		    )
+		    from Writing writing
+		    join writing.content content
+		    join content.cover cover
+		    where writing.user.id = :userId
+		    group by cover.id, content.id, cover.title, cover.coverImageUrl, content.view, cover.time
+		""")
+		List<MyWritingCoverResponseDto> findMyWritingCovers(@Param("userId") Long userId);
 }

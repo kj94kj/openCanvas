@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+// 예전 userDto라서 쓰는거 비추.
 @Getter 
 @Setter
 @NoArgsConstructor
@@ -35,10 +36,10 @@ public class UserDto {
 	private List<LikeDto> likeDtos = new ArrayList<>();
 	private List<WritingDto> writingDtos = new ArrayList<>();
 
-	public UserDto(String nickname, String email, String color) {
+	public UserDto(String nickname, String email, Role role) {
 		this.nickname = nickname;
 		this.email = email;
-		this.color = color;
+		this.role = role;
 	}
 	
 	public UserDto(String nickname, String email, String color, Role role) {
@@ -55,20 +56,5 @@ public class UserDto {
 	// 유저의 색상을 정해야할때 
     public User toEntityColor() {
         return new User(nickname, email, color, role);
-    }
-    
-    // 좋아요 했던 것과 글썼던 목록도 보기위한 UserDto
-    public static UserDto fromEntity(User user) {
-    	List<LikeDto> likeDtos = user.getLikes().stream()
-    			.map((like) -> LikeDto.fromEntity(like,like.getContent().getTitle(), user.getEmail())).toList();
-    	
-    	List<WritingDto> writingDtos = user.getWritings().stream()
-    			.map(writing -> {
-    				String title = writing.getContent().getCover().getTitle(); // 또는 content.getTitle() 커버 방식에 맞게
-    				return WritingDto.fromEntity(writing, title);
-    			})
-    			.toList();
-    	
-    	return new UserDto(user.getId(), user.getNickname(), user.getEmail(), user.getColor(), user.getRole(), likeDtos, writingDtos);
     }
 }

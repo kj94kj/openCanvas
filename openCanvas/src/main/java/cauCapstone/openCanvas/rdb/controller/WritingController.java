@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
+import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.service.ContentService;
 import cauCapstone.openCanvas.rdb.service.WritingService;
