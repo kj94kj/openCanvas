@@ -2,6 +2,9 @@ package cauCapstone.openCanvas.rdb.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
@@ -27,18 +30,24 @@ public class CoverService {
 	}
 	
 	// 모든 커버를 최신순으로 불러오는 메소드(조회수와 좋아요 포함)
-	public List<CoverDto> showAllCovers(){
-		return coverRepository.findAllWithLikeCountByIdDesc();
+	public Page<CoverDto> showAllCovers(int page, int size){
+		Pageable pageable = PageRequest.of(page, size);
+		
+		return coverRepository.findAllWithLikeCountByIdDesc(pageable);
 	}
 	
 	// 모든 커버를 좋아요순으로 불러오는 메소드(조회수와 좋아요 포함)
-	public List<CoverDto> showAllCoversWithLikes(){
-		return coverRepository.findAllOrderByLikeCountDesc();
+	public Page<CoverDto> showAllCoversWithLikes(int page, int size){
+		Pageable pageable = PageRequest.of(page, size);
+		
+		return coverRepository.findAllOrderByLikeCountDesc(pageable);
 	}
 	
 	// 모든 커버를 조회순으로 불러오는 메소드(조회수와 좋아요 포함)
-	public List<CoverDto> showAllCoversWithViews(){
-		return coverRepository.findAllOrderByViewDesc();
+	public Page<CoverDto> showAllCoversWithViews(int page, int size){
+		Pageable pageable = PageRequest.of(page, size);
+		
+		return coverRepository.findAllOrderByViewDesc(pageable);
 	}
 	
 	// ! 유저필요

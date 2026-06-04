@@ -2,6 +2,7 @@ package cauCapstone.openCanvas.rdb.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,22 +30,25 @@ public class CoverController {
 
     @GetMapping("/all")
     @Operation(summary = "전체 커버 조회 (최신순)", description = "모든 커버를 최신순으로 조회합니다, List<CoverDto>를 반환한다.")
-    public ResponseEntity<List<CoverDto>> getAllCovers() {
-        return ResponseEntity.ok(coverService.showAllCovers());
+    public ResponseEntity<Page<CoverDto>> getAllCovers(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(coverService.showAllCovers(page, size));
     }
 
     @GetMapping("/likes")
     @Operation(summary = "전체 커버 조회 (좋아요순)", description = "모든 커버를 좋아요 개수 기준으로 정렬하여 조회합니다,"
     		+ "List<CoverDto>를 반환한다")
-    public ResponseEntity<List<CoverDto>> getCoversByLikes() {
-        return ResponseEntity.ok(coverService.showAllCoversWithLikes());
+    public ResponseEntity<Page<CoverDto>> getCoversByLikes(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(coverService.showAllCoversWithLikes(page, size));
     }
 
     @GetMapping("/views")
     @Operation(summary = "전체 커버 조회 (조회수순)", description = "모든 커버를 조회수 기준으로 정렬하여 조회합니다,"
     		+ "List<CoverDto>를 반환한다")
-    public ResponseEntity<List<CoverDto>> getCoversByViews() {
-        return ResponseEntity.ok(coverService.showAllCoversWithViews());
+    public ResponseEntity<Page<CoverDto>> getCoversByViews(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(coverService.showAllCoversWithViews(page, size));
     }
 
     @DeleteMapping("/{id}")
