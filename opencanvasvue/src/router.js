@@ -6,6 +6,7 @@ import MyPageTest from './views/MyPageTest.vue'
 import MyInfoPage from './views/MyInfoPage.vue'
 import MyWritingPage from './views/MyWritingPage.vue'
 import MyLikedPage from './views/MyLikedPage.vue'
+import MainPage from './views/MainPage.vue'
 
 const routes = [
   {
@@ -31,6 +32,10 @@ const routes = [
   {
     path: '/mypage/likes',
     component: MyLikedPage
+  },
+  {
+    path: '/mainpage',
+    component: MainPage
   }
 ]
 
