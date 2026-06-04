@@ -3,12 +3,26 @@
     <h1>커버 목록</h1>
 
     <div>
+      <input
+        v-model="keyword"
+        placeholder="제목 검색"
+        @keyup.enter="searchCovers"
+      />
+      <button @click="searchCovers">검색</button>
+      <button @click="clearSearch" v-if="isSearchMode">전체 보기</button>
+    </div>
+
+    <hr />
+
+    <div>
       <button @click="changeSort('new')">최신순</button>
       <button @click="changeSort('likes')">좋아요순</button>
       <button @click="changeSort('views')">조회수순</button>
     </div>
 
     <hr />
+
+    <p v-if="covers.length === 0">표시할 커버가 없습니다.</p>
 
     <div
       v-for="cover in covers"
@@ -31,7 +45,7 @@
 
     <hr />
 
-    <div>
+    <div v-if="!isSearchMode">
       <button @click="prevPage" :disabled="page === 0">
         이전
       </button>
@@ -59,7 +73,12 @@ const totalPages = ref(0)
 
 const sortType = ref('new')
 
+const keyword = ref('')
+const isSearchMode = ref(false)
+
 async function getCovers() {
+  isSearchMode.value = false
+
   const response = await axios.get(`/api/covers/${sortType.value}`, {
     params: {
       page: page.value,
@@ -67,40 +86,36 @@ async function getCovers() {
     }
   })
 
-  // 실제용
-  // covers.value = response.data.content
-  // totalPages.value = response.data.totalPages
+  covers.value = response.data.content
+  totalPages.value = response.data.totalPages
+}
 
-  // 테스트용
-  covers.value = [
-    {
-      coverId: 1,
-      contentId: 101,
-      title: '첫 번째 테스트 작품',
-      coverImageUrl: '',
-      roomType: 'PUBLIC',
-      view: 123,
-      likeCount: 15,
-      coverTime: '2026-06-04T10:00:00'
-    },
-    {
-      coverId: 2,
-      contentId: 102,
-      title: '두 번째 테스트 작품',
-      coverImageUrl: '',
-      roomType: 'PRIVATE',
-      view: 77,
-      likeCount: 5,
-      coverTime: '2026-06-03T14:30:00'
+async function searchCovers() {
+  if (!keyword.value.trim()) {
+    getCovers()
+    return
+  }
+
+  const response = await axios.get('/api/covers/search', {
+    params: {
+      keyword: keyword.value
     }
-  ]
+  })
 
-  totalPages.value = 3
+  covers.value = response.data
+  isSearchMode.value = true
+}
+
+function clearSearch() {
+  keyword.value = ''
+  page.value = 0
+  getCovers()
 }
 
 function changeSort(type) {
   sortType.value = type
   page.value = 0
+  keyword.value = ''
   getCovers()
 }
 
