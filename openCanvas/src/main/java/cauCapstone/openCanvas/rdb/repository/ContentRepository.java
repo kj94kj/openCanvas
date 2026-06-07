@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import cauCapstone.openCanvas.rdb.dto.FirstContentDto;
 import cauCapstone.openCanvas.rdb.entity.Content;
 
 public interface ContentRepository extends JpaRepository<Content, Long>{
@@ -22,4 +23,21 @@ public interface ContentRepository extends JpaRepository<Content, Long>{
     int countLikesById(@Param("contentId") Long id);
     
     Optional<Content> findByTitle(String title);
+    
+    @Query("""
+            SELECT new cauCapstone.openCanvas.rdb.dto.FirstContentDto(
+                c.id,
+                c.view,
+                SIZE(c.likes),
+                cv.id,
+                cv.title,
+                cv.roomType,
+                cv.roomId,
+                cv.limit
+            )
+            FROM Content c
+            JOIN c.cover cv
+            WHERE cv.id = :coverId
+        """)
+        FirstContentDto findFirstContentDtoByCoverId(@Param("coverId") Long coverId);
 }

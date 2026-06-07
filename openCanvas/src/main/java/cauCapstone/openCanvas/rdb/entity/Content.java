@@ -63,7 +63,7 @@ public class Content {
 	private List<ContentGenre> genres = new ArrayList<>();
 	
 	public Content(Cover cover) {
-		this.view = 1;
+		this.view = 0;
 		this.cover = cover;
 		this.title = cover.getTitle();
 		this.official = "1.1";

@@ -8,12 +8,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Cover;
 import cauCapstone.openCanvas.rdb.entity.Role;
 import cauCapstone.openCanvas.rdb.entity.RoomType;
 import cauCapstone.openCanvas.rdb.entity.User;
+import cauCapstone.openCanvas.rdb.repository.ContentRepository;
 import cauCapstone.openCanvas.rdb.repository.CoverRepository;
 import cauCapstone.openCanvas.rdb.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -21,12 +24,20 @@ import lombok.RequiredArgsConstructor;
 public class CoverService {
 	private final CoverRepository coverRepository;
 	private final UserRepository userRepository;
+	private final ContentRepository contentRepository;
 	
 	// 커버를 생성하는 메소드
+	// content도 같이 만들도록 수정함.
+	@Transactional
 	public Cover makeCover(CoverDto coverDto) {
 		Cover cover = coverDto.toEntity();
 		cover.setRoomType(RoomType.AVAILABLE);
-		return coverRepository.save(cover);
+		coverRepository.save(cover);
+		
+		Content content = new Content(cover);
+		contentRepository.save(content);
+		
+		return cover;
 	}
 	
 	// 모든 커버를 최신순으로 불러오는 메소드(조회수와 좋아요 포함)

@@ -6,7 +6,10 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
+import cauCapstone.openCanvas.rdb.dto.FinalContentDto;
+import cauCapstone.openCanvas.rdb.dto.FirstContentDto;
 import cauCapstone.openCanvas.rdb.dto.ResCommentDto;
+import cauCapstone.openCanvas.rdb.dto.SimpleWritingDto;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.entity.Comment;
 import cauCapstone.openCanvas.rdb.entity.CommentLike;
@@ -21,6 +24,7 @@ import cauCapstone.openCanvas.rdb.repository.ContentRepository;
 import cauCapstone.openCanvas.rdb.repository.CoverRepository;
 import cauCapstone.openCanvas.rdb.repository.LikeRepository;
 import cauCapstone.openCanvas.rdb.repository.UserRepository;
+import cauCapstone.openCanvas.rdb.repository.WritingRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +36,7 @@ public class ContentService {
 	private final LikeRepository likeRepository;
 	private final UserRepository userRepository;
 	private final CommentLikeRepository commentLikeRepository;
+	private final WritingRepository writingRepository;
 	
 	// ! 유저필요
 	// coverId를 받아서 Content를 리턴하는 메소드, Content가 없으면 새로 저장한다.
@@ -128,5 +133,30 @@ public class ContentService {
     
     public void recommendSet(List<WritingDto> writingDto) {
     	
+    }
+    
+    // 최종 content조회 메소드.
+    // 생성과 조회를 분리함.
+    public FinalContentDto getFinalContentByCoverId(Long coverId) {
+    	
+	    Content content = contentRepository.findByCoverId(coverId)
+	            .orElseThrow(() -> new IllegalArgumentException(
+	            		"해당 coverId의 content가 없습니다. coverId = " + coverId
+	            ));
+	    
+	    content.setView(content.getView() + 1);
+	    contentRepository.save(content);	
+	    
+        FirstContentDto firstContentDto =
+                contentRepository.findFirstContentDtoByCoverId(coverId);
+
+        if (firstContentDto == null) {
+            throw new IllegalArgumentException("해당 coverId의 content가 없습니다. coverId = " + coverId);
+        }
+
+        List<SimpleWritingDto> simpleWritingDtos =
+                writingRepository.findSimpleWritingDtosByContentId(firstContentDto.getId());
+
+        return new FinalContentDto(firstContentDto, simpleWritingDtos);
     }
 }

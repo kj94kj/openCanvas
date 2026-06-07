@@ -77,6 +77,7 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
     	""")
     	List<CoverDto> searchByTitleKeyword(@Param("keyword") String keyword);
     
+    	// 안쓰는듯.
     	Optional<Cover> findByTitle(String title);
     	
     	Optional<Cover> findByRoomId(String roomId);

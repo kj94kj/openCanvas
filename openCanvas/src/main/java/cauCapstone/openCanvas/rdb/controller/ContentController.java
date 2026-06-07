@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
+import cauCapstone.openCanvas.rdb.dto.FinalContentDto;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
 import cauCapstone.openCanvas.rdb.service.ContentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ public class ContentController {
 
     private final ContentService contentService;
 
+    /*
     @GetMapping("/{coverId}")
     @Operation(summary = "컨텐츠 조회", description = "커버 ID에 해당하는 컨텐츠를 조회하거나 없으면 생성하며, "
     		+ "조회수 증가 및 내가 좋아요 또는 싫어요를 눌렀는지도 알려줌,"
@@ -32,6 +34,7 @@ public class ContentController {
         ContentDto contentDto = contentService.getContent(coverId, email, true);
         return ResponseEntity.ok(contentDto);
     }
+    */
 
     @PostMapping("/like-toggle")
     @Operation(summary = "좋아요/싫어요 토글", description = "사용자가 해당 컨텐츠에 대해 좋아요 또는 싫어요를 토글합니다. "
@@ -49,5 +52,11 @@ public class ContentController {
         Long coverId = contentService.toggleLike(email, contentId, likeType);
         ContentDto contentDto = contentService.getContent(coverId, email, false);
         return ResponseEntity.ok(contentDto);
+    }
+    
+    @GetMapping("/{coverId}")
+    @Operation(summary = "컨텐츠 조회")
+    public ResponseEntity<FinalContentDto> getContent(@PathVariable Long coverId) {
+        return ResponseEntity.ok(contentService.getFinalContentByCoverId(coverId));
     }
 }

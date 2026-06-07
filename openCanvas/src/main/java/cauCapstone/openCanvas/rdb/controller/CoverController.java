@@ -28,7 +28,7 @@ public class CoverController {
         return ResponseEntity.ok(CoverDto.fromEntity(coverService.makeCover(coverDto), null));
     }
 
-    @GetMapping("/all")
+    @GetMapping("/new")
     @Operation(summary = "전체 커버 조회 (최신순)", description = "모든 커버를 최신순으로 조회합니다, List<CoverDto>를 반환한다.")
     public ResponseEntity<Page<CoverDto>> getAllCovers(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {

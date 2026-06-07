@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
+import cauCapstone.openCanvas.rdb.dto.SimpleWritingDto;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.entity.Writing;
 
@@ -38,6 +39,7 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
 	Optional<Writing> findByDepthAndSiblingIndexAndContent_Title(int depth, int siblingIndex, String title);
 	
 	// 글(content)의 모든 WritingDto를 가져온다. WritingDto는 depth와 siblingIndex가 작은 순으로 정렬된다.
+	// !contentid로 조회하게 바꿔야할듯.
 	@Query("""
 		    SELECT new cauCapstone.openCanvas.rdb.dto.WritingDto(
 		        w.depth, w.siblingIndex, w.time, u.email)
@@ -49,6 +51,27 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
 		    ORDER BY w.depth ASC, w.siblingIndex ASC
 		""")
 		List<WritingDto> findAllDtosByContentTitle(@Param("title") String title);
+	
+	// 루트처럼 부모가 없으면 parentindex = 0 으로 해둔거 신경쓰기.
+	@Query("""
+		    SELECT new cauCapstone.openCanvas.rdb.dto.SimpleWritingDto(
+			    w.id,
+			    w.depth,
+			    w.siblingIndex,
+			    coalesce(p.siblingIndex, 0),
+			    substring(coalesce(w.body, ''), 1, 80),
+			    w.time,
+			    u.id,
+			    u.username,
+			    w.content.id
+		    )
+		    FROM Writing w
+		    JOIN w.user u
+		    LEFT JOIN w.parent p
+		    WHERE w.content.id = :contentId
+		    ORDER BY w.depth ASC, w.siblingIndex ASC
+		""")
+		List<SimpleWritingDto> findSimpleWritingDtosByContentId(@Param("contentId") Long contentId);
 	
 	
 	// 부모 엔티티로 자식을 찾기 위해 이 메소드를 씀. 
