@@ -134,7 +134,7 @@ function nextPage() {
 }
 
 function goContent(cover) {
-  router.push(`/content/${cover.contentId}`)
+  router.push(`/content/${cover.coverId}`)
 }
 
 function formatDate(dateText) {

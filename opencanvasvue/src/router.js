@@ -36,6 +36,11 @@ const routes = [
   {
     path: '/mainpage',
     component: MainPage
+  },
+  {
+  path: '/content/:coverId',
+  name: 'ContentPage',
+  component: ContentPage
   }
 ]
 
