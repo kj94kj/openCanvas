@@ -61,6 +61,7 @@ public class WritingService {
     }
     
     // Wrting 리프노드에서 부모노드들을 전부 가져오는 역할: 리프노드는 실제 저장이 되있어야한다.
+    // 프론트에서는 curDepth, curSiblingIndex, title이 필요함.
     @Transactional
     public List<WritingDto> getWritingWithParents(WritingDto writingDto) {
     	List<WritingDto> allWritingDtos = new ArrayList<>();

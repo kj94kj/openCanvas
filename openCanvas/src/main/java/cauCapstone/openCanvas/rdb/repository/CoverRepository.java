@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
 import cauCapstone.openCanvas.rdb.entity.Cover;
+import cauCapstone.openCanvas.rdb.entity.RoomType;
 
 public interface CoverRepository extends JpaRepository<Cover, Long>{
 
@@ -104,4 +105,11 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
     		    ORDER BY c.id DESC
     		""")
     		List<CoverDto> findCoverDtosByGenreName(@Param("genreName") String genreName);
+    	
+    	@Query("""
+    		    SELECT c.roomType
+    		    FROM Cover c
+    		    WHERE c.id = :coverId
+    		""")
+    		Optional<RoomType> findRoomTypeByCoverId(@Param("coverId") Long coverId);
 }

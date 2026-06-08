@@ -87,4 +87,8 @@ public class CoverService {
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Cover입니다."));
     }
     
+    public RoomType getRoomType(Long coverId) {
+        return coverRepository.findRoomTypeByCoverId(coverId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 cover가 없습니다. coverId = " + coverId));
+    }
 }

@@ -135,55 +135,37 @@ async function fetchContent() {
   }
 }
 
-function selectWriting(writing) {
+async function selectWriting(writing) {
   selectedWriting.value = writing
 
-  // 일단 임시로 상태 판단
-  // 나중에 백엔드 API나 WebSocket 상태로 교체하면 됨.
+  await fetchParents(writing)
+
   checkWriteStatus(writing)
 }
 
-function checkWriteStatus(writing) {
-  // 현재는 임시 로직
-  // 실제로는 writingId 또는 contentId 기준으로 서버에 상태 요청하는 게 좋음.
-  writeStatus.value = 'WRITABLE'
+async function fetchParents(writing) {
+  try {
+      //프론트에서는 curDepth, curSiblingIndex, title이 필요해서 최소한의 dto를 만듦.
+    const requestDto = {
+      depth: writing.depth,
+      siblingIndex: writing.siblingIndex,
+      title: contentInfo.value.title
+    }
+
+    const response = await axios.post('/api/writings/parents', requestDto)
+
+    selectedPath.value = response.data ?? []
+  } catch (error) {
+    console.error('부모 글 조회 실패', error)
+    selectedPath.value = []
+  }
 }
 
-const selectedPath = computed(() => {
-  if (!selectedWriting.value) {
-    return []
-  }
-
-  /*
-    현재 DTO에는 parentWritingId가 없음.
-    그래서 정확한 "부모 경로"를 복원하기 어렵다.
-
-    지금 가능한 임시 방식:
-    선택한 writing의 depth 이하 중에서
-    각 depth별로 하나씩 골라서 보여주는 방식.
-
-    하지만 정확하게 하려면 SimpleWritingDto에 parentWritingId를 추가하는 게 좋음.
-  */
-
-  return writings.value
-    .filter(w => w.depth <= selectedWriting.value.depth)
-    .filter(w => {
-      if (w.depth === selectedWriting.value.depth) {
-        return w.writingId === selectedWriting.value.writingId
-      }
-
-      // 임시 처리
-      // parentSiblingIndex 기준으로 어느 정도 추적하려는 방식
-      return true
-    })
-    .sort((a, b) => {
-      if (a.depth !== b.depth) {
-        return a.depth - b.depth
-      }
-
-      return a.siblingIndex - b.siblingIndex
-    })
-})
+async function checkWriteStatus(writing) {
+  const response = await axios.get(`/api/covers/${coverId}/room-type`)
+  const roomType = response.data
+  writeStatus.value = roomType
+}
 
 function makePreview(body) {
   if (!body) {
@@ -241,6 +223,27 @@ function startWriting() {
   // 예시
   // connectWebSocket(writingStartRequest)
 }
+
+const canWrite = computed(() => {
+  if (!contentInfo.value) return false
+
+  if (contentInfo.value.roomType === 'FINISHED') return false
+
+  if (contentInfo.value.roomType === 'EDITING') return false
+
+  // 아직 글이 하나도 없으면 첫 글 작성 가능
+  if (writings.value.length === 0) return true
+
+  // 글이 있는데 선택한 글이 없으면 작성 불가
+  if (!selectedWriting.value) return false
+
+  // 선택한 글의 자식 개수 확인
+  const childCount = writings.value.filter(w =>
+    w.depth === selectedWriting.value.depth + 1
+  ).length
+
+  return childCount < 2
+})
 </script>
 
 <style scoped>

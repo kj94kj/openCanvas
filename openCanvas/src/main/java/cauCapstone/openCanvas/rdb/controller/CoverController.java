@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.entity.RoomType;
 import cauCapstone.openCanvas.rdb.service.CoverService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -73,5 +74,10 @@ public class CoverController {
     @Operation(summary = "캔버스 상태 확인", description = "coverId로 캔버스 상태(RoomType 등)를 확인합니다. CoverDto를 반환합니다.")
     public ResponseEntity<CoverDto> checkCoverStatus(@RequestParam(name = "coverId") Long coverId) {
         return ResponseEntity.ok(coverService.checkCover(coverId));
+    }
+    
+    @GetMapping("/{coverId}/room-type")
+    public ResponseEntity<RoomType> getRoomType(@PathVariable Long coverId) {
+        return ResponseEntity.ok(coverService.getRoomType(coverId));
     }
 }
