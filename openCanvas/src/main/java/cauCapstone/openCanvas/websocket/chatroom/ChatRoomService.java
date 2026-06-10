@@ -24,9 +24,9 @@ public class ChatRoomService {
     private final CoverRepository coverRepository;
     
     // 채팅방 객체는 Redis Hash에 "CHAT_ROOMS"라는 키로 저장된다.
-    public ChatRoomRedisEntity createChatRoom(String title, String subject, String version) {
+    public ChatRoomRedisEntity createChatRoom(String roomId, String title, String subject, String version) {
     	
-        ChatRoomRedisEntity chatRoom = ChatRoomRedisEntity.create(title, subject, version);
+        ChatRoomRedisEntity chatRoom = ChatRoomRedisEntity.create(roomId, title, subject, version);
     
     	chatRoomRepository.createRoom(chatRoom);
         
@@ -51,7 +51,6 @@ public class ChatRoomService {
         
         // 6. roomType, roomId 설정 후 저장
         cover.setRoomType(RoomType.EDITING); // RoomType이 enum이면 EDITING으로 설정
-        cover.setRoomId(chatRoom.getRoomId());
         coverRepository.save(cover);
         
         return chatRoom;

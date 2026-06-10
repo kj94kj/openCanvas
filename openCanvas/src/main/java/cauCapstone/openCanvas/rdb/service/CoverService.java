@@ -1,6 +1,7 @@
 package cauCapstone.openCanvas.rdb.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class CoverService {
 	public Cover makeCover(CoverDto coverDto) {
 		Cover cover = coverDto.toEntity();
 		cover.setRoomType(RoomType.AVAILABLE);
+		cover.setRoomId(UUID.randomUUID().toString());;
 		coverRepository.save(cover);
 		
 		Content content = new Content(cover);

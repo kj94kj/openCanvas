@@ -62,7 +62,7 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
 			    substring(coalesce(w.body, ''), 1, 80),
 			    w.time,
 			    u.id,
-			    u.username,
+			    u.nickname,
 			    w.content.id
 		    )
 		    FROM Writing w

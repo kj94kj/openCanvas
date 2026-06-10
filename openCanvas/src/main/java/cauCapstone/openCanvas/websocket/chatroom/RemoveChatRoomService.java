@@ -39,7 +39,6 @@ public class RemoveChatRoomService {
             if(cover.getRoomType() != RoomType.COMPLETE) {
                 cover.setRoomType(RoomType.AVAILABLE); 
             }
-            cover.setRoomId(null);
             coverRepository.save(cover);
     	}
     }

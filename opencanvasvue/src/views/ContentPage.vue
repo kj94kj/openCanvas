@@ -42,27 +42,10 @@
         <!-- 글쓰기 버튼 -->
         <div class="write-area">
           <button
-            v-if="writeStatus === 'WRITABLE'"
-            class="write-button"
-            @click="startWriting"
+            @click="enterWritingRoom"
+            :disabled="!selectedWriting || contentInfo?.roomType === 'FINISHED' || !canWrite"
           >
-            글쓰기
-          </button>
-
-          <button
-            v-else-if="writeStatus === 'WRITING'"
-            class="write-button disabled"
-            disabled
-          >
-            다른 사람이 작성중
-          </button>
-
-          <button
-            v-else
-            class="write-button disabled"
-            disabled
-          >
-            불가능
+            {{ writingButtonText }}
           </button>
         </div>
       </div>
@@ -113,7 +96,29 @@ const selectedWriting = ref(null)
 // WRITABLE: 글쓰기 가능
 // WRITING: 다른 사람이 작성중
 // DISABLED: 불가능
-const writeStatus = ref('WRITABLE')
+const writingButtonText = computed(() => {
+  if (!selectedWriting.value) {
+    return '글을 선택해주세요'
+  }
+
+  if (contentInfo.value.roomType === 'EDITING') {
+    return '관전하기'
+  }
+
+  if (contentInfo.value.roomType === 'FINISHED') {
+    return '완료된 글'
+  }
+
+    if (contentInfo.value.roomType === 'AVAILABLE') {
+    if (!canWrite.value) {
+      return '더 이상 이어쓰기 불가'
+    }
+
+    return '이어쓰기'
+  }
+
+  return '로딩중'
+})
 
 // 예시: /content/:coverId 로 들어온다고 가정
 const coverId = route.params.coverId
@@ -187,41 +192,68 @@ function formatDate(time) {
   return new Date(time).toLocaleString()
 }
 
-function startWriting() {
+async function enterWritingRoom() {
   if (!selectedWriting.value) {
-    alert('버전을 먼저 선택해주세요.')
+    alert('글을 선택해주세요.')
     return
   }
 
-  if (writeStatus.value !== 'WRITABLE') {
+  const roomId = contentInfo.value.roomId
+  const roomType = contentInfo.value.roomType
+
+  if (roomType === 'AVAILABLE') {
+    await enterAsEditor(roomId)
     return
   }
 
-  /*
-    여기서 웹소켓 연결 작업 시작하면 됨.
-
-    필요한 값:
-    - contentId
-    - parentWritingId
-    - depth
-    - siblingIndex
-    - roomId
-
-    selectedWriting 기준으로 이어쓰기 시작.
-  */
-
-  const writingStartRequest = {
-    contentId: selectedWriting.value.contentId,
-    parentWritingId: selectedWriting.value.writingId,
-    parentDepth: selectedWriting.value.depth,
-    parentSiblingIndex: selectedWriting.value.siblingIndex,
-    roomId: contentInfo.value.roomId
+  if (roomType === 'EDITING') {
+    enterAsViewer(roomId)
+    return
   }
 
-  console.log('글쓰기 시작 요청', writingStartRequest)
+  if (roomType === 'FINISHED') {
+    alert('이미 완료된 글입니다.')
+  }
+}
 
-  // 예시
-  // connectWebSocket(writingStartRequest)
+async function enterAsEditor(roomId) {
+
+  try {
+    await api.post(`/api/rooms/${roomId}/create`)
+
+    router.push({
+      path: `/writing-room/${roomId}`,
+      query: {
+        mode: 'editor',
+        writingId: selectedWriting.value.id,
+        contentId: contentInfo.value.id
+      },
+      state: {
+        chatRoom: response.data
+      }
+    })
+  } catch (error) {
+    console.error(error)
+    alert(error.response?.data || '작성자로 입장하지 못했습니다.')
+  }
+}
+
+async function enterAsViewer(roomId) {
+  try {
+    const response = await axios.get(`/api/rooms/${roomId}/enter`)
+
+    router.push({
+      path: `/writing-room/${roomId}`,
+      query: {
+        mode: 'viewer'
+      },
+      state: {
+        chatRoom: response.data
+      }
+    })
+  } catch (error) {
+    alert(error.response?.data || '관전자로 입장하지 못했습니다.')
+  }
 }
 
 const canWrite = computed(() => {

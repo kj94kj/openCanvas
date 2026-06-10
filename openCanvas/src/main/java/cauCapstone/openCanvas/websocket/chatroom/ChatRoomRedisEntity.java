@@ -31,10 +31,10 @@ public class ChatRoomRedisEntity implements Serializable {
     private String name;
     private String subject;
     private String version;		// 현재 Writing 버전을 string화 해서 넣음. TODO: .으로 구분해서 파싱해야함
-
-    public static ChatRoomRedisEntity create(String name, String subject, String version) {
+    
+    public static ChatRoomRedisEntity create(String roomId, String name, String subject, String version) {
         ChatRoomRedisEntity chatRoom = new ChatRoomRedisEntity();
-        chatRoom.roomId = UUID.randomUUID().toString();
+        chatRoom.roomId = roomId;
         chatRoom.name = name;
         chatRoom.subject = subject;
         chatRoom.version = version;

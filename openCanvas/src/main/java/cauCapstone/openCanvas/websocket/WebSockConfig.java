@@ -23,7 +23,7 @@ public class WebSockConfig implements WebSocketMessageBrokerConfigurer {
         config.enableSimpleBroker("/sub");
         config.setApplicationDestinationPrefixes("/pub");
     }
-
+    
     // 로컬일 때 stomp-websocket 엔드포인트는 ws://localhost:8080/ws-stomp가 된다.
     // 다른 서버에서 오는 요청을 허용하기 위해 setAllowdOrigins("*")를 한다.
     @Override

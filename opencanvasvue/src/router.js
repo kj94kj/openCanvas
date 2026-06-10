@@ -41,6 +41,10 @@ const routes = [
   path: '/content/:coverId',
   name: 'ContentPage',
   component: ContentPage
+  },
+  {
+    path: '/writing-room/:roomId',
+    component: WritingRoomPage
   }
 ]
 

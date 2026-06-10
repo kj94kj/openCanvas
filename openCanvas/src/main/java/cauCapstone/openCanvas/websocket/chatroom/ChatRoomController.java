@@ -25,7 +25,7 @@ public class ChatRoomController {
     private final ChatRoomService chatRoomService;
     private final SnapshotService snapshotService;
 
-    @PostMapping("/create")
+    @PostMapping("/{roomId}/create")
     @Operation(
     	    summary = "문서방 생성 및 입장",
     	    description = "편집자가 문서방을 생성하고 바로 입장합니다. "
@@ -34,7 +34,8 @@ public class ChatRoomController {
     	    		+ "이어쓰는 경우에는 WritingDto에 부모의 depth, siblingIndex가 필요함,"
     	    		+ "ChatRoomDto를 반환함."
     	)
-    public ResponseEntity<?> createRoomAndEnter(@RequestBody WritingDto writingDto) {
+    public ResponseEntity<?> createRoomAndEnter(@RequestBody WritingDto writingDto,
+            										@PathVariable String roomId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     	
         if (auth == null || !auth.isAuthenticated()) {
@@ -58,6 +59,7 @@ public class ChatRoomController {
         }
 
         ChatRoomRedisEntity chatRoom = chatRoomService.createChatRoom(
+        	roomId,
             writingDto.getTitle(),
             email,
             version
@@ -70,7 +72,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatRoomDto);
     }
     
-    @GetMapping("/{roomId}")
+    @GetMapping("/{roomId}/enter")
     @Operation(
         summary = "문서방 참여 (구독자)",
         description = "roomId를 통해 기존 문서방에 구독자로 참여합니다. "
