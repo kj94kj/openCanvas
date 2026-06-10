@@ -7,6 +7,9 @@ import MyInfoPage from './views/MyInfoPage.vue'
 import MyWritingPage from './views/MyWritingPage.vue'
 import MyLikedPage from './views/MyLikedPage.vue'
 import MainPage from './views/MainPage.vue'
+import ContentPage from './views/ContentPage.vue'
+import WritingRoomPage from './views/WritingRoomPage.vue'
+import CoverCreatePage from './views/CoverCreatePage.vue'
 
 const routes = [
   {
@@ -38,13 +41,16 @@ const routes = [
     component: MainPage
   },
   {
-  path: '/content/:coverId',
-  name: 'ContentPage',
-  component: ContentPage
+    path: '/content/:coverId',
+    component: ContentPage
   },
   {
     path: '/writing-room/:roomId',
     component: WritingRoomPage
+  },
+  {
+    path: '/cover-create',
+    component: CoverCreatePage
   }
 ]
 

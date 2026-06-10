@@ -52,10 +52,9 @@ public class Cover {
 	
 	private Integer limit;
 	
-	public Cover(String title, String coverImageUrl, LocalDateTime time, Integer limit) {
+	public Cover(String title, String coverImageUrl, Integer limit) {
 		this.title = title;
 		this.coverImageUrl = coverImageUrl;
-		this.time = time;
 		this.limit = limit;
 	}
 }

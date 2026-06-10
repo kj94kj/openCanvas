@@ -1,5 +1,6 @@
 package cauCapstone.openCanvas.rdb.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.dto.CoverRequestDto;
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Cover;
 import cauCapstone.openCanvas.rdb.entity.Role;
@@ -30,8 +32,9 @@ public class CoverService {
 	// 커버를 생성하는 메소드
 	// content도 같이 만들도록 수정함.
 	@Transactional
-	public Cover makeCover(CoverDto coverDto) {
-		Cover cover = coverDto.toEntity();
+	public Cover makeCover(CoverRequestDto coverRequestDto) {
+		Cover cover = coverRequestDto.toEntity();
+	    cover.setTime(LocalDateTime.now());
 		cover.setRoomType(RoomType.AVAILABLE);
 		cover.setRoomId(UUID.randomUUID().toString());;
 		coverRepository.save(cover);

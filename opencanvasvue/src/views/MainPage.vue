@@ -2,6 +2,10 @@
   <div>
     <h1>커버 목록</h1>
 
+    <button @click="goCreateCover">
+    글쓰기
+    </button>
+
     <div>
       <input
         v-model="keyword"
@@ -140,6 +144,10 @@ function goContent(cover) {
 function formatDate(dateText) {
   if (!dateText) return ''
   return new Date(dateText).toLocaleString()
+}
+
+function goCreateCover() {
+  router.push('/cover-create')
 }
 
 onMounted(() => {

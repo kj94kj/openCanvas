@@ -87,7 +87,7 @@ public class CoverDto {
 	*/
 	
 	public Cover toEntity() {
-		return new Cover(title, coverImageUrl, time, limit);
+		return new Cover(title, coverImageUrl, limit);
 	}	// 좋아요 개수
 	
 }

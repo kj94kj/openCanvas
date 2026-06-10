@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.dto.CoverRequestDto;
 import cauCapstone.openCanvas.rdb.entity.RoomType;
 import cauCapstone.openCanvas.rdb.service.CoverService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,8 +26,8 @@ public class CoverController {
     @Operation(summary = "커버 생성", description = "새로운 커버를 생성함 커버란 캔버스를 누르기 전에 보이는 겉 표지이다. "
     		+ "누르면 나오는 내용물은 content라고 칭한다, "
     		+ "CoverDto가 필요하다, CoverDto를 반환한다.")
-    public ResponseEntity<CoverDto> createCover(@RequestBody CoverDto coverDto) {
-        return ResponseEntity.ok(CoverDto.fromEntity(coverService.makeCover(coverDto), null));
+    public ResponseEntity<CoverDto> createCover(@RequestBody CoverRequestDto coverRequestDto) {
+        return ResponseEntity.ok(CoverDto.fromEntity(coverService.makeCover(coverRequestDto), null));
     }
 
     @GetMapping("/new")
