@@ -30,7 +30,7 @@
 
     <div
       v-for="cover in covers"
-      :key="cover.coverId"
+      :key="cover.id"
       class="card"
       @click="goContent(cover)"
     >
@@ -65,7 +65,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -83,7 +83,7 @@ const isSearchMode = ref(false)
 async function getCovers() {
   isSearchMode.value = false
 
-  const response = await axios.get(`/api/covers/${sortType.value}`, {
+  const response = await api.get(`/api/covers/${sortType.value}`, {
     params: {
       page: page.value,
       size: size.value
@@ -100,7 +100,7 @@ async function searchCovers() {
     return
   }
 
-  const response = await axios.get('/api/covers/search', {
+  const response = await api.get('/api/covers/search', {
     params: {
       keyword: keyword.value
     }
@@ -138,7 +138,7 @@ function nextPage() {
 }
 
 function goContent(cover) {
-  router.push(`/content/${cover.coverId}`)
+  router.push(`/content/${cover.id}`)
 }
 
 function formatDate(dateText) {

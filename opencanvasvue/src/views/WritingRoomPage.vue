@@ -22,11 +22,8 @@
         연결 해제
       </button>
 
-      <button
-        v-if="isEditor"
-        @click="finishWriting"
-      >
-        작성 완료
+      <button @click="exitWritingRoom">
+        {{ isEditor ? '작성 완료' : '나가기' }}
       </button>
     </div>
   </div>
@@ -139,26 +136,25 @@ function publishEditMessage() {
       type: 'EDIT',
       roomId: roomId,
       message: text.value,
-      block: '1'
+      num: '1'
     })
   })
 }
 
-async function finishWriting() {
+async function exitWritingRoom() {
   try {
-    await api.post(`/api/rooms/${roomId}/finish`, {
-      body: text.value,
-      writingId: route.query.writingId
+    await api.post('/api/rooms/exit', null, {
+      params: {
+        roomId
+      }
     })
-
-    alert('작성이 완료되었습니다.')
 
     disconnectWebSocket()
 
     router.push(`/content/${route.query.contentId || ''}`)
   } catch (error) {
     console.error(error)
-    alert(error.response?.data || '작성 완료에 실패했습니다.')
+    alert(error.response?.data || '문서방 나가기에 실패했습니다.')
   }
 }
 

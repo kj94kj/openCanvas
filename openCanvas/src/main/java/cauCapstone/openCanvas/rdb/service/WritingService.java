@@ -109,7 +109,7 @@ public class WritingService {
         // 4. Writing 저장
         Writing writing = writingDto.toEntity(user, content, parent);
         
-        if(parent.getDepth() >= content.getCover().getLimit()) {
+        if(writing.getDepth() >= content.getCover().getLimit()) {
         	content.getCover().setRoomType(RoomType.COMPLETE);
         	coverRepository.save(content.getCover());
         	

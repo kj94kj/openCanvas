@@ -39,7 +39,8 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
 		    FROM Cover c
 		    LEFT JOIN c.content ct
 		    LEFT JOIN ct.likes l
-		    GROUP BY c.id, c.title, c.coverImageUrl, c.time, ct.view
+		    GROUP BY c.id, c.title, c.coverImageUrl, c.time,
+			        ct.view, c.roomType, c.roomId, c.limit
 		    ORDER BY ct.view DESC
 		""")
 		Page<CoverDto> findAllOrderByViewDesc(Pageable pageable);
@@ -52,7 +53,8 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
     	    FROM Cover c
     	    LEFT JOIN c.content ct
     	    LEFT JOIN ct.likes l
-    	    GROUP BY c.id, c.title, c.coverImageUrl, c.time, ct.view
+    		GROUP BY c.id, c.title, c.coverImageUrl, c.time,
+             ct.view, c.roomType, c.roomId, c.limit
     	    ORDER BY c.id DESC
     	""")
     	Page<CoverDto> findAllWithLikeCountByIdDesc(Pageable pageable);
@@ -73,7 +75,8 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
     	    LEFT JOIN c.content ct
     	    LEFT JOIN ct.likes l
     	    WHERE c.title IS NOT NULL AND LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    	    GROUP BY c.id, c.title, c.coverImageUrl, c.time, ct.view
+    	    GROUP BY c.id, c.title, c.coverImageUrl, c.time,
+             ct.view, c.roomType, c.roomId, c.limit
     	    ORDER BY c.id DESC
     	""")
     	List<CoverDto> searchByTitleKeyword(@Param("keyword") String keyword);

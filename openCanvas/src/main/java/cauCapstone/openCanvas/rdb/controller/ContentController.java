@@ -56,7 +56,7 @@ public class ContentController {
     
     @GetMapping("/{coverId}")
     @Operation(summary = "컨텐츠 조회")
-    public ResponseEntity<FinalContentDto> getContent(@PathVariable Long coverId) {
+    public ResponseEntity<FinalContentDto> getContent(@PathVariable("coverId") Long coverId) {
         return ResponseEntity.ok(contentService.getFinalContentByCoverId(coverId));
     }
 }

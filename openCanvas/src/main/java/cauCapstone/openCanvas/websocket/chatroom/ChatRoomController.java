@@ -35,7 +35,7 @@ public class ChatRoomController {
     	    		+ "ChatRoomDto를 반환함."
     	)
     public ResponseEntity<?> createRoomAndEnter(@RequestBody WritingDto writingDto,
-            										@PathVariable String roomId) {
+            										@PathVariable(name = "roomId") String roomId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     	
         if (auth == null || !auth.isAuthenticated()) {

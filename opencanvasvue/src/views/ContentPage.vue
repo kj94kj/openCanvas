@@ -1,5 +1,15 @@
 <template>
   <div class="content-page">
+        <!-- 글쓰기 버튼 -->
+    <div class="write-area">
+      <button
+        @click="enterWritingRoom"
+        :disabled="!canEnterRoom"
+      >
+        {{ writingButtonText }}
+      </button>
+    </div>
+
     <!-- 왼쪽: 글 영역 -->
     <section class="left-panel">
       <div v-if="!selectedWriting" class="empty-box">
@@ -39,15 +49,6 @@
 
         <hr />
 
-        <!-- 글쓰기 버튼 -->
-        <div class="write-area">
-          <button
-            @click="enterWritingRoom"
-            :disabled="!selectedWriting || contentInfo?.roomType === 'FINISHED' || !canWrite"
-          >
-            {{ writingButtonText }}
-          </button>
-        </div>
       </div>
     </section>
 
@@ -55,26 +56,36 @@
     <aside class="right-panel">
       <h3>버전 목록</h3>
 
-        <div class="version-grid">
-          <div
-            v-for="writing in writings"
-            :key="writing.writingId"
-            class="version-card"
-            :class="{ selected: selectedWriting?.writingId === writing.writingId }"
-            @click="selectWriting(writing)"
-          >
-            <div class="version-header">
-              <strong>{{ writing.depth }}-{{ writing.siblingIndex }}</strong>
+      <div
+        v-for="row in groupedWritings"
+        :key="row.depth"
+        class="version-row"
+      >
+        <div
+          v-for="(writing, index) in row.columns"
+          :key="writing?.writingId ?? `empty-${row.depth}-${index}`"
+         class="version-card"
+         :class="{
+            selected: isSelectedWriting(writing),
+            path: isSelectedPathWriting(writing),
+            empty: !writing
+         }"
+          @click="writing && selectWriting(writing)"
+        >
+         <template v-if="writing">
+           <div class="version-header">
+             <strong>{{ writing.depth }}-{{ writing.siblingIndex }}</strong>
               <span>{{ writing.username }}</span>
-            </div>
+           </div>
 
             <div class="version-time">
               {{ formatDate(writing.time) }}
             </div>
 
             <p class="version-preview">
-              {{ makePreview(writing.body) }}
+             {{ makePreview(writing.body) }}
             </p>
+         </template>
         </div>
       </div>
     </aside>
@@ -83,53 +94,132 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
-import { useRoute } from 'vue-router'
+import api from '@/api'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 
 const contentInfo = ref(null)
 const writings = ref([])
 const selectedWriting = ref(null)
+const selectedPath = ref([])
 
-// 나중에 백엔드에서 상태 받아오면 이 값만 바꾸면 됨.
-// WRITABLE: 글쓰기 가능
-// WRITING: 다른 사람이 작성중
-// DISABLED: 불가능
-const writingButtonText = computed(() => {
-  if (!selectedWriting.value) {
-    return '글을 선택해주세요'
-  }
-
-  if (contentInfo.value.roomType === 'EDITING') {
-    return '관전하기'
-  }
-
-  if (contentInfo.value.roomType === 'FINISHED') {
-    return '완료된 글'
-  }
-
-    if (contentInfo.value.roomType === 'AVAILABLE') {
-    if (!canWrite.value) {
-      return '더 이상 이어쓰기 불가'
-    }
-
-    return '이어쓰기'
-  }
-
-  return '로딩중'
-})
-
-// 예시: /content/:coverId 로 들어온다고 가정
 const coverId = route.params.coverId
 
 onMounted(() => {
   fetchContent()
 })
 
+const groupedWritings = computed(() => {
+  const sorted = [...writings.value].sort((a, b) => {
+    if (a.depth !== b.depth) {
+      return a.depth - b.depth
+    }
+
+    return a.siblingIndex - b.siblingIndex
+  })
+
+  const map = new Map()
+
+  sorted.forEach(writing => {
+    if (!map.has(writing.depth)) {
+      map.set(writing.depth, {
+        depth: writing.depth,
+        columns: [null, null]
+      })
+    }
+
+    const row = map.get(writing.depth)
+
+    if (writing.siblingIndex === 1) {
+      row.columns[0] = writing
+    }
+
+    if (writing.siblingIndex === 2) {
+      row.columns[1] = writing
+    }
+  })
+
+  return [...map.values()]
+})
+
+function isSelectedWriting(writing) {
+  if (!writing || !selectedWriting.value) return false
+
+  return (
+    writing.depth === selectedWriting.value.depth &&
+    writing.siblingIndex === selectedWriting.value.siblingIndex
+  )
+}
+
+function isSelectedPathWriting(writing) {
+  if (!writing) return false
+
+  return selectedPath.value.some(pathWriting =>
+    pathWriting.depth === writing.depth &&
+    pathWriting.siblingIndex === writing.siblingIndex
+  )
+}
+
+const writingButtonText = computed(() => {
+  if (!contentInfo.value) {
+    return '로딩중'
+  }
+
+  if (contentInfo.value.roomType === 'AVAILABLE') {
+    if (!selectedWriting.value && writings.value.length > 0) {
+      return '글을 선택해 주세요'
+    }
+
+    return '이어쓰기'
+  }
+
+  if (contentInfo.value.roomType === 'EDITING') {
+    return '관전하기'
+  }
+
+  if (contentInfo.value.roomType === 'COMPLETE') {
+    return '완료된 글'
+  }
+
+  return '로딩중'
+})
+
+const canWrite = computed(() => {
+  if (!contentInfo.value) return false
+
+  if (contentInfo.value.roomType === 'COMPLETE') return false
+  if (contentInfo.value.roomType === 'EDITING') return false
+
+  if (writings.value.length === 0) return true
+
+  if (!selectedWriting.value) return false
+
+  const childCount = writings.value.filter(w =>
+    w.depth === selectedWriting.value.depth + 1
+  ).length
+
+  return childCount < 2
+})
+
+const canEnterRoom = computed(() => {
+  if (!contentInfo.value) return false
+
+  if (contentInfo.value.roomType === 'COMPLETE') return false
+
+  if (contentInfo.value.roomType === 'EDITING') return true
+
+  if (contentInfo.value.roomType === 'AVAILABLE') {
+    return canWrite.value
+  }
+
+  return false
+})
+
 async function fetchContent() {
   try {
-    const response = await axios.get(`/api/content/${coverId}`)
+    const response = await api.get(`/api/content/${coverId}`)
 
     const data = response.data
 
@@ -145,19 +235,18 @@ async function selectWriting(writing) {
 
   await fetchParents(writing)
 
-  checkWriteStatus(writing)
+  await checkWriteStatus()
 }
 
 async function fetchParents(writing) {
   try {
-      //프론트에서는 curDepth, curSiblingIndex, title이 필요해서 최소한의 dto를 만듦.
     const requestDto = {
       depth: writing.depth,
       siblingIndex: writing.siblingIndex,
       title: contentInfo.value.title
     }
 
-    const response = await axios.post('/api/writings/parents', requestDto)
+    const response = await api.post('/api/writings/parents', requestDto)
 
     selectedPath.value = response.data ?? []
   } catch (error) {
@@ -166,35 +255,34 @@ async function fetchParents(writing) {
   }
 }
 
-async function checkWriteStatus(writing) {
-  const response = await axios.get(`/api/covers/${coverId}/room-type`)
-  const roomType = response.data
-  writeStatus.value = roomType
+async function checkWriteStatus() {
+  try {
+    const response = await api.get(`/api/covers/${coverId}/room-type`)
+
+    if (contentInfo.value) {
+      contentInfo.value.roomType = response.data
+    }
+  } catch (error) {
+    console.error('방 상태 조회 실패', error)
+  }
 }
 
 function makePreview(body) {
-  if (!body) {
-    return ''
-  }
+  if (!body) return ''
 
-  if (body.length <= 50) {
-    return body
-  }
+  if (body.length <= 50) return body
 
   return body.substring(0, 50) + '...'
 }
 
 function formatDate(time) {
-  if (!time) {
-    return ''
-  }
+  if (!time) return ''
 
   return new Date(time).toLocaleString()
 }
 
 async function enterWritingRoom() {
-  if (!selectedWriting.value) {
-    alert('글을 선택해주세요.')
+  if (!contentInfo.value) {
     return
   }
 
@@ -202,30 +290,50 @@ async function enterWritingRoom() {
   const roomType = contentInfo.value.roomType
 
   if (roomType === 'AVAILABLE') {
+    if (!selectedWriting.value && writings.value.length > 0) {
+      alert('글을 선택해주세요.')
+      return
+    }
+
     await enterAsEditor(roomId)
     return
   }
 
   if (roomType === 'EDITING') {
-    enterAsViewer(roomId)
+    await enterAsViewer(roomId)
     return
   }
 
-  if (roomType === 'FINISHED') {
+  if (roomType === 'COMPLETE') {
     alert('이미 완료된 글입니다.')
   }
 }
 
 async function enterAsEditor(roomId) {
-
   try {
-    await api.post(`/api/rooms/${roomId}/create`)
+    let writingDto
+
+    if (writings.value.length === 0) {
+      writingDto = {
+        depth: 0,
+        siblingIndex: 0,
+        title: contentInfo.value.title
+      }
+    } else {
+      writingDto = {
+        depth: selectedWriting.value.depth,
+        siblingIndex: selectedWriting.value.siblingIndex,
+        title: contentInfo.value.title
+      }
+    }
+
+    const response = await api.post(`/api/rooms/${roomId}/create`, writingDto)
 
     router.push({
       path: `/writing-room/${roomId}`,
       query: {
         mode: 'editor',
-        writingId: selectedWriting.value.id,
+        writingId: selectedWriting.value?.writingId,
         contentId: contentInfo.value.id
       },
       state: {
@@ -240,7 +348,7 @@ async function enterAsEditor(roomId) {
 
 async function enterAsViewer(roomId) {
   try {
-    const response = await axios.get(`/api/rooms/${roomId}/enter`)
+    const response = await api.get(`/api/rooms/${roomId}/enter`)
 
     router.push({
       path: `/writing-room/${roomId}`,
@@ -252,30 +360,10 @@ async function enterAsViewer(roomId) {
       }
     })
   } catch (error) {
+    console.error(error)
     alert(error.response?.data || '관전자로 입장하지 못했습니다.')
   }
 }
-
-const canWrite = computed(() => {
-  if (!contentInfo.value) return false
-
-  if (contentInfo.value.roomType === 'FINISHED') return false
-
-  if (contentInfo.value.roomType === 'EDITING') return false
-
-  // 아직 글이 하나도 없으면 첫 글 작성 가능
-  if (writings.value.length === 0) return true
-
-  // 글이 있는데 선택한 글이 없으면 작성 불가
-  if (!selectedWriting.value) return false
-
-  // 선택한 글의 자식 개수 확인
-  const childCount = writings.value.filter(w =>
-    w.depth === selectedWriting.value.depth + 1
-  ).length
-
-  return childCount < 2
-})
 </script>
 
 <style scoped>
@@ -363,9 +451,20 @@ const canWrite = computed(() => {
 }
 
 .version-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.version-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+}
+
+.version-card.empty {
+  visibility: hidden;
+  cursor: default;
 }
 
 .version-card {
@@ -381,9 +480,14 @@ const canWrite = computed(() => {
   background-color: #f0f0f0;
 }
 
+.version-card.path {
+  border: 3px solid orange;
+  background-color: #fff3cd;
+}
+
 .version-card.selected {
-  border: 2px solid #222;
-  background-color: #eeeeee;
+  border: 4px solid red;
+  background-color: #ffe0e0;
 }
 
 .version-header {

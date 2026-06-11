@@ -68,7 +68,7 @@ public class ExitChatRoomController {
     /*
     @PostMapping("/force-delete")
     public ResponseEntity<String> forceDelete() {
-    	removeEditorService.forceR("loghelix223@gmail.com", "b0b1d61e-176e-43d1-80ef-a7c05574d810");
+    	removeEditorService.forceR("이메일넣기", "b0b1d61e-176e-43d1-80ef-a7c05574d810");
         return ResponseEntity.ok("강제 삭제 시도");
     }
     */

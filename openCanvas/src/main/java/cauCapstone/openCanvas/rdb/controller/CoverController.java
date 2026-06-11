@@ -32,24 +32,24 @@ public class CoverController {
 
     @GetMapping("/new")
     @Operation(summary = "전체 커버 조회 (최신순)", description = "모든 커버를 최신순으로 조회합니다, List<CoverDto>를 반환한다.")
-    public ResponseEntity<Page<CoverDto>> getAllCovers(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<CoverDto>> getAllCovers(@RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
         return ResponseEntity.ok(coverService.showAllCovers(page, size));
     }
 
     @GetMapping("/likes")
     @Operation(summary = "전체 커버 조회 (좋아요순)", description = "모든 커버를 좋아요 개수 기준으로 정렬하여 조회합니다,"
     		+ "List<CoverDto>를 반환한다")
-    public ResponseEntity<Page<CoverDto>> getCoversByLikes(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<CoverDto>> getCoversByLikes(@RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
         return ResponseEntity.ok(coverService.showAllCoversWithLikes(page, size));
     }
 
     @GetMapping("/views")
     @Operation(summary = "전체 커버 조회 (조회수순)", description = "모든 커버를 조회수 기준으로 정렬하여 조회합니다,"
     		+ "List<CoverDto>를 반환한다")
-    public ResponseEntity<Page<CoverDto>> getCoversByViews(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<CoverDto>> getCoversByViews(@RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
         return ResponseEntity.ok(coverService.showAllCoversWithViews(page, size));
     }
 
@@ -78,7 +78,7 @@ public class CoverController {
     }
     
     @GetMapping("/{coverId}/room-type")
-    public ResponseEntity<RoomType> getRoomType(@PathVariable Long coverId) {
+    public ResponseEntity<RoomType> getRoomType(@PathVariable(name = "coverId") Long coverId) {
         return ResponseEntity.ok(coverService.getRoomType(coverId));
     }
 }
