@@ -1,4 +1,21 @@
 <template>
+  <div class="story-area" v-if="previousWritings.length > 0">
+    <div
+      v-for="writing in previousWritings"
+      :key="writing.writingId"
+      class="story-block"
+    >
+      <div class="story-meta">
+        {{ writing.depth }}-{{ writing.siblingIndex }}
+       / {{ writing.username }}
+      </div>
+
+     <p class="story-body">
+        {{ writing.body }}
+      </p>
+    </div>
+  </div>
+
   <div class="writing-room-page">
     <h1>문서방</h1>
 
@@ -143,6 +160,10 @@ function publishEditMessage() {
 
 async function exitWritingRoom() {
   try {
+    if (isEditor.value) {
+      publishEditMessage()
+    }
+
     await api.post('/api/rooms/exit', null, {
       params: {
         roomId

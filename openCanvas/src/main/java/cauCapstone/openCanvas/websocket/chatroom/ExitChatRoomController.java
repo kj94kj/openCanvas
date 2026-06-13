@@ -57,10 +57,11 @@ public class ExitChatRoomController {
         snapshotService.saveSnapshotToDB(roomId);
 
         // 4. 문서방 제거 (리스너 해제 포함, 메시지 발행 포함)
-        new Thread(() -> {
+        /*new Thread(() -> {
             try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
             removeChatRoomService.removeChatRoom(roomId);
-        }).start();
+        }).start();*/ 
+        removeChatRoomService.removeChatRoom(roomId);
 
         return ResponseEntity.ok("문서방 종료 처리 완료");
     }

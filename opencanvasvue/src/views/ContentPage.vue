@@ -107,10 +107,10 @@ const selectedPath = ref([])
 
 const coverId = route.params.coverId
 
-onMounted(() => {
-  fetchContent()
+onMounted(async () => {
+  await fetchContent()
+  // await refreshRoomTypeWithRetry()
 })
-
 const groupedWritings = computed(() => {
   const sorted = [...writings.value].sort((a, b) => {
     if (a.depth !== b.depth) {
@@ -362,6 +362,23 @@ async function enterAsViewer(roomId) {
   } catch (error) {
     console.error(error)
     alert(error.response?.data || '관전자로 입장하지 못했습니다.')
+  }
+}
+
+
+  function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function refreshRoomTypeWithRetry() {
+  for (let i = 0; i < 5; i++) {
+    await checkWriteStatus()
+
+    if (contentInfo.value?.roomType !== 'EDITING') {
+      return
+    }
+
+    await sleep(300)
   }
 }
 </script>
