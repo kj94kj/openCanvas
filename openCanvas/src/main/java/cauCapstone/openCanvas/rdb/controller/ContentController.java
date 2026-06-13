@@ -37,11 +37,8 @@ public class ContentController {
     */
 
     @PostMapping("/like-toggle")
-    @Operation(summary = "좋아요/싫어요 토글", description = "사용자가 해당 컨텐츠에 대해 좋아요 또는 싫어요를 토글합니다. "
-    		+ "동일한 타입을 누르면 취소됩니다(좋아요 2번누르면취소),"
-    		+ "contentId, likeType 필요함, contentDto 리턴함")
     public ResponseEntity<?> toggleLike(
-            @RequestParam(name = "contentId") Long contentId,
+            @RequestParam(name = "coverId") Long coverId,
             @RequestParam(name = "likeType") LikeType likeType) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -49,9 +46,20 @@ public class ContentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인되지 않음");
         }
         String email = (String) auth.getPrincipal();
-        Long coverId = contentService.toggleLike(email, contentId, likeType);
-        ContentDto contentDto = contentService.getContent(coverId, email, false);
-        return ResponseEntity.ok(contentDto);
+        return ResponseEntity.ok(contentService.toggleLike(email, coverId, likeType));
+    }
+    
+    // 처음에 유저가 좋아요 눌렀는지 확인용
+    @GetMapping("/like-check")
+    public ResponseEntity<?> likeCheck(
+            @RequestParam(name = "coverId") Long coverId) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인되지 않음");
+        }
+        String email = (String) auth.getPrincipal();
+        return ResponseEntity.ok(contentService.likeCheck(email, coverId));
     }
     
     @GetMapping("/{coverId}")

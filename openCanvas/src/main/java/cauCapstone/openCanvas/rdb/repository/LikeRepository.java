@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import cauCapstone.openCanvas.rdb.entity.Like;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
@@ -16,4 +18,16 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 	
 	// 글에서 유저가 좋아요를 눌렀던 것을 가져옴. -> 좋아요 취소, 싫어요로 바꾸기를 위한 메소드
 	Optional<Like> findByUserIdAndContentId(Long userId, Long contentId);
+	
+	@Query("""
+		    SELECT l
+		    FROM Like l
+		    WHERE l.content.cover.id = :coverId
+		      AND l.user.id = :userId
+		      AND l.liketype = cauCapstone.openCanvas.rdb.entity.LikeType.LIKE
+		""")
+		Optional<Like> findLikeByCoverIdAndUserId(
+		    @Param("coverId") Long coverId,
+		    @Param("userId") Long userId
+		);
 }

@@ -10,6 +10,20 @@
       </button>
     </div>
 
+  <div class="like-area">
+    <button
+      class="like-button"
+      :class="{ liked: isLiked }"
+     @click="toggleLike"
+    >
+     {{ isLiked ? '♥' : '♡' }}
+    </button>
+
+   <span class="like-count">
+     {{ contentInfo?.likeCount ?? 0 }}
+   </span>
+  </div>
+
     <!-- 왼쪽: 글 영역 -->
     <section class="left-panel">
       <div v-if="!selectedWriting" class="empty-box">
@@ -104,11 +118,13 @@ const contentInfo = ref(null)
 const writings = ref([])
 const selectedWriting = ref(null)
 const selectedPath = ref([])
+const isLiked = ref(false)
 
 const coverId = route.params.coverId
 
 onMounted(async () => {
   await fetchContent()
+  await fetchLikeCheck()
   // await refreshRoomTypeWithRetry()
 })
 const groupedWritings = computed(() => {
@@ -365,6 +381,50 @@ async function enterAsViewer(roomId) {
   }
 }
 
+async function fetchLikeCheck() {
+  try {
+    const response = await api.get('/api/content/like-check', {
+      params: {
+        coverId
+      }
+    })
+
+    isLiked.value = response.data
+  } catch (error) {
+    console.error('좋아요 상태 조회 실패', error)
+    isLiked.value = false
+  }
+}
+
+async function toggleLike() {
+  if (!contentInfo.value) return
+
+  const beforeLiked = isLiked.value
+
+  try {
+    const response = await api.post('/api/content/like-toggle', null, {
+      params: {
+        coverId,
+        likeType: 'LIKE'
+      }
+    })
+
+    const afterLiked = response.data
+
+    isLiked.value = afterLiked
+
+    if (beforeLiked === false && afterLiked === true) {
+      contentInfo.value.likeCount = (contentInfo.value.likeCount ?? 0) + 1
+    }
+
+    if (beforeLiked === true && afterLiked === false) {
+      contentInfo.value.likeCount = Math.max((contentInfo.value.likeCount ?? 0) - 1, 0)
+    }
+  } catch (error) {
+    console.error('좋아요 토글 실패', error)
+    alert(error.response?.data || '좋아요 처리에 실패했습니다.')
+  }
+}
 
   function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -523,5 +583,29 @@ async function refreshRoomTypeWithRetry() {
   font-size: 14px;
   color: #444;
   line-height: 1.4;
+}
+
+.like-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 24px;
+}
+
+.like-button {
+  border: none;
+  background: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+}
+
+.like-button.liked {
+  color: red;
+}
+
+.like-count {
+  font-size: 16px;
+  font-weight: bold;
 }
 </style>

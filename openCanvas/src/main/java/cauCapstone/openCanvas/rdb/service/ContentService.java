@@ -97,9 +97,14 @@ public class ContentService {
 	// ! 유저필요
     // 좋아요 또는 싫어요를 눌렀을때 토글하기 : 안눌렀던 것을 눌렀으면 기존에 눌렀던 것 찾아서 삭제후 안눌렀던거 추가
     @Transactional
-    public Long toggleLike(String email, Long contentId, LikeType newLikeType) {
+    public boolean toggleLike(String email, Long coverId, LikeType newLikeType) {
         User user = userRepository.findByEmail(email)
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        
+        Content oldContent = contentRepository.findByCoverId(coverId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 컨텐츠입니다."));
+        
+        Long contentId = oldContent.getId();
     	
         Optional<Like> existingLikeOpt = likeRepository.findByUserIdAndContentId(user.getId(), contentId);
 
@@ -111,7 +116,7 @@ public class ContentService {
             if (existingLike.getLiketype() == newLikeType) {
                 likeRepository.delete(existingLike);
                 
-                return existingLike.getContent().getCover().getId();
+                return false;
             }
 
             // 2. 다른 타입을 누른 경우 → 기존 삭제 후 새로 생성
@@ -122,13 +127,31 @@ public class ContentService {
         // 3. 아무것도 없거나 다른 거 눌렀던 경우 → 새로운 Like 저장
         Like newLike = new Like();
         newLike.setUser(userRepository.getReferenceById(user.getId()));
-        Content content = contentRepository.getReferenceById(contentId);
         newLike.setContent(contentRepository.getReferenceById(contentId));
         newLike.setLiketype(newLikeType);
 
         likeRepository.save(newLike);
         
-        return content.getCover().getId();
+        return true;
+    }
+    
+    @Transactional
+    public boolean likeCheck(String email, Long coverId) {
+        User user = userRepository.findByEmail(email)
+	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        
+        Content oldContent = contentRepository.findByCoverId(coverId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 컨텐츠입니다."));
+        
+        Long contentId = oldContent.getId();
+    	
+        Optional<Like> existingLikeOpt = likeRepository.findByUserIdAndContentId(user.getId(), contentId);
+        
+        if(existingLikeOpt.isPresent()) {
+        	return true;
+        }else {
+        	return false;
+        }
     }
     
     public void recommendSet(List<WritingDto> writingDto) {
