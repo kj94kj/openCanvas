@@ -44,7 +44,7 @@
       <p>방 타입: {{ cover.roomType }}</p>
       <p>조회수: {{ cover.view }}</p>
       <p>좋아요: {{ cover.likeCount }}</p>
-      <p>생성일: {{ formatDate(cover.coverTime) }}</p>
+      <p>생성일: {{ formatDate(cover.time) }}</p>
     </div>
 
     <hr />

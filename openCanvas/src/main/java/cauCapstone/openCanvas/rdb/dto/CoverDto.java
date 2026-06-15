@@ -34,7 +34,7 @@ public class CoverDto {
 	private Integer view;
 	// 좋아요 개수
 	@Schema(description = "좋아요갯수")
-	private Long likeNum;	// TODO: 나중에 잘 안되면 (int) 해서 타입바꾸기.
+	private Long likeCount;	// TODO: 나중에 잘 안되면 (int) 해서 타입바꾸기.
 	
 	@Schema(description = "편집중일때; EDITING (roomId와 같이 실림)"
 			+ "편집 가능할때; AVAILABLE"
@@ -57,14 +57,14 @@ public class CoverDto {
 		this.limit = limit;
 		this.roomType= roomType;	}
 	
-	public CoverDto(Long id, String title, String coverImageUrl, LocalDateTime time, int view, Long likeNum
+	public CoverDto(Long id, String title, String coverImageUrl, LocalDateTime time, int view, Long likeCount
 			, RoomType roomType, String roomId, Integer limit) {
 		this.id = id;
 		this.title= title;
 		this.coverImageUrl = coverImageUrl;
 		this.time = time;
 		this.view = view;
-		this.likeNum = likeNum;
+		this.likeCount = likeCount;
 		this.roomType = roomType;
 		this.roomId = roomId;
 		this.limit = limit;
