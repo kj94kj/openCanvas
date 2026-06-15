@@ -350,7 +350,7 @@ async function enterAsEditor(roomId) {
       query: {
         mode: 'editor',
         writingId: selectedWriting.value?.writingId,
-        contentId: contentInfo.value.id
+        coverId: coverId
       },
       state: {
         chatRoom: response.data
@@ -369,7 +369,8 @@ async function enterAsViewer(roomId) {
     router.push({
       path: `/writing-room/${roomId}`,
       query: {
-        mode: 'viewer'
+        mode: 'viewer',
+        coverId: coverId
       },
       state: {
         chatRoom: response.data

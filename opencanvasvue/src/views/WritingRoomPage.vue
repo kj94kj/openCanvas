@@ -61,6 +61,9 @@ const mode = route.query.mode
 
 const isEditor = computed(() => mode === 'editor')
 
+const chatRoom = history.state.chatRoom
+const previousWritings = ref(chatRoom?.writings ?? [])
+
 const connected = ref(false)
 const text = ref('')
 
@@ -172,7 +175,7 @@ async function exitWritingRoom() {
 
     disconnectWebSocket()
 
-    router.push(`/content/${route.query.contentId || ''}`)
+    router.push(`/content/${route.query.coverId || ''}`)
   } catch (error) {
     console.error(error)
     alert(error.response?.data || '문서방 나가기에 실패했습니다.')
