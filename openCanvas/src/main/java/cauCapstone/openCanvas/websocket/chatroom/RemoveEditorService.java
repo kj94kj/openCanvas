@@ -82,18 +82,36 @@ public class RemoveEditorService {
     @Schema(description = "프론트에서는 messageType.ROOMOUT인 메시지가 온다면 구독 해제, 웹소켓 연결을 끊으면 됩니다.")
     // messageType가 ROOMOUT인 메시지를 보내고 받은 유저는 문서방이 닫혔으므로 구독 해제, 웹소켓 연결을 끊어야함.
     public void sendROOMOUTmessage(Set<String> subjects, String roomId) {
+        if (subjects == null || subjects.isEmpty()) {
+            log.info("ROOMOUT 보낼 대상 없음. roomId={}", roomId);
+            return;
+        }
+
+        ChatMessage roomOutMessage = new ChatMessage();
+        roomOutMessage.setType(ChatMessage.MessageType.ROOMOUT);
+        roomOutMessage.setRoomId(roomId);
+        roomOutMessage.setSubject(null); // 특정 유저 대상 아님. 방 전체 알림.
+        roomOutMessage.setMessage("작성자가 작성을 마쳤습니다. 종료하기 버튼을 눌러주세요.");
+
+        redisPublisher.publish(new ChannelTopic(roomId), roomOutMessage);
+    }
+    
+    /*@Schema(description = "프론트에서는 messageType.ROOMOUT인 메시지가 온다면 구독 해제, 웹소켓 연결을 끊으면 됩니다.")
+    // messageType가 ROOMOUT인 메시지를 보내고 받은 유저는 문서방이 닫혔으므로 구독 해제, 웹소켓 연결을 끊어야함.
+    public void sendROOMOUTmessage(Set<String> subjects, String roomId) {
     	if(subjects!=null) {
         	for(String sub : subjects) {
             	ChatMessage roomOutMessage = new ChatMessage();
             	roomOutMessage.setType(ChatMessage.MessageType.ROOMOUT);
             	roomOutMessage.setRoomId(roomId);
             	roomOutMessage.setSubject(sub);
-            	roomOutMessage.setMessage(sub+" 유저를 "+roomId+"를 UNSUBSCRIBE 해야함.");
+            	// roomOutMessage.setMessage(sub+" 유저를 "+roomId+"를 UNSUBSCRIBE 해야함.");
+                roomOutMessage.setMessage("작성자가 작성을 마쳤습니다. 종료하기 버튼을 눌러주세요.");
 
             	redisPublisher.publish(new ChannelTopic(roomId), roomOutMessage);
         	}
     	}
-    }
+    }*/
     
     /*
     public String forceR(String subject, String roomId) {
