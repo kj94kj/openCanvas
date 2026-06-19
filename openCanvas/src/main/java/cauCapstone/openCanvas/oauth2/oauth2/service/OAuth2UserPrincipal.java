@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-// OAuth2User 인터페이스의 구현객체이다.
-// OAuth2UserInfo의 유저정보와 계정이 유효하다는걸 알리는 정보가 있다.
+//OAuth2 인증 후 Spring Security가 사용할 사용자 Principal 객체이다.
+//OAuth2UserInfo를 감싸 OAuth2User와 UserDetails 인터페이스에 맞게 사용자 정보를 제공한다.
 public class OAuth2UserPrincipal implements OAuth2User, UserDetails{
 	
     private final OAuth2UserInfo userInfo;
@@ -55,7 +55,6 @@ public class OAuth2UserPrincipal implements OAuth2User, UserDetails{
         return userInfo.getAttributes();
     }
 
-    //TODO: 현재 이부분이 빈 리스트를 반환하게 되있다.
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();

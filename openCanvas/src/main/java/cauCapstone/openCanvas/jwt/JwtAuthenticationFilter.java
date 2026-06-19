@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     	
         String requestURI = request.getRequestURI();
         if (requestURI.equals("/auth/refresh")) {
-            filterChain.doFilter(request, response); // 통과시킴
+            filterChain.doFilter(request, response); 
             return;
         }
     	
@@ -45,17 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String role = claims.get("role", String.class);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        email, null, Collections.singletonList(new SimpleGrantedAuthority(role)) // 권한이 있으면 GrantedAuthority로 넣기
+                        email, null, Collections.singletonList(new SimpleGrantedAuthority(role)) 
                 );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // ✅ SecurityContext에 등록!
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (RuntimeException ex) {
-                // 유효하지 않은 JWT → 인증은 실패하지만 요청은 계속 진행
+            	// 유효하지 않은 JWT → 401 응답 후 요청 흐름 종료
                 logger.warn("JWT 검증 실패: " + ex.getMessage());
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid JWT");
-                return; // 요청 흐름 종료
+                return;
             }
         }
 

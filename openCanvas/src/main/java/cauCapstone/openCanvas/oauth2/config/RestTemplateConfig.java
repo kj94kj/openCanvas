@@ -5,9 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-// RestTemplate는 HTTP API 요청을 보내고 받기 위한 도구이다.
-// 연결 끊기에 사용된다.
-// 빈으로 등록해 어플리케이션 전역으로 @Autowired를 이용해 객체를 생성가능하다.
+//외부 HTTP API 호출에 사용할 RestTemplate을 Bean으로 등록한다.
+//OAuth2 연결 해제 등 서버 간 API 요청에서 재사용할 수 있다.
 @Configuration
 public class RestTemplateConfig {
 

@@ -15,7 +15,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -30,25 +32,6 @@ import lombok.RequiredArgsConstructor;
 
     만료된 Access Token 대신 저장해둔 Refresh Token을 사용해
     새로운 Access Token을 발급받을 수 있습니다.
-
-요청 예시
-
-POST /auth/refresh
-Content-Type: application/json
-
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR..."
-}
-
-응답 예시 (200 OK)
-
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-}
-
-    새로 발급된 Access Token은 이후 요청 시 Authorization 헤더에 넣어 사용합니다.
-
-Authorization: Bearer 새_엑세스토큰
 		""")
 public class AuthController {
 
@@ -61,10 +44,16 @@ public class AuthController {
             description = "리프레시 토큰을 이용해 새로운 엑세스 토큰을 발급받습니다.")
             @ApiResponses(value = {
                 @ApiResponse(responseCode = "200", description = "새로운 엑세스 토큰 발급 성공"),
+                @ApiResponse(responseCode = "400", description = "요청 형식 오류 또는 리프레시 토큰 누락"),
                 @ApiResponse(responseCode = "401", description = "리프레시 토큰이 없거나 유효하지 않음")
             }
         )
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        if (body == null || body.get("refreshToken") == null || body.get("refreshToken").isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("리프레시 토큰이 필요합니다.");
+        }
+    	
         String refreshToken = body.get("refreshToken");
 
         try {
@@ -74,15 +63,33 @@ public class AuthController {
 
             // 2. Redis에서 저장된 리프레시 토큰 검증
             RefreshToken savedToken = jwtTokenizer.refreshTokenRepository.findById(email)
-                    .orElseThrow(() -> new RuntimeException("저장된 리프레시 토큰이 없습니다."));
+                    .orElse(null);
+
+            if (savedToken == null) {
+                log.warn("Refresh token not found in Redis. email={}", email);
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("유효하지 않은 리프레시 토큰입니다.");
+            }
 
             if (!savedToken.getToken().equals(refreshToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("리프레시 토큰이 일치하지 않습니다.");
+                log.warn("리프레시 토큰 불일치. email={}", email);
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("유효하지 않은 리프레시 토큰입니다.");
             }
+
 
             // 3. 유저 DB에서 권한 조회
             User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+                    .orElse(null);
+
+            if (user == null) {
+                log.error("Refresh token subject exists but user not found. email={}", email);
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("유효하지 않은 리프레시 토큰입니다.");
+            }
 
             // 4. 새 엑세스 토큰 발급
             Map<String, Object> newClaims = Map.of("email", user.getEmail(),
@@ -94,7 +101,9 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("리프레시 토큰 검증 실패: " + e.getMessage());
+            log.warn("리프레시 토큰 검증 실패. reason={}", e.getMessage());
+        	
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 리프레시 토큰입니다.");
         }
     }
 }

@@ -28,15 +28,13 @@ import java.util.Optional;
 import static cauCapstone.openCanvas.oauth2.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.MODE_PARAM_COOKIE_NAME;
 import static cauCapstone.openCanvas.oauth2.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME;
 
-// 로그인 상황과 회원탈퇴 상황이 있다.
-// 상속한 SimpleUrlAuthenticationSuccessHandler는 로그인 성공 시 리다이렉트 하는 로직을 제공한다.
-// 리프레시토큰은 로그인 상태에서의 생명주기를 가진다.
+//OAuth2 인증 성공 후 로그인 또는 연동 해제(unlink) 흐름을 처리한다.
+//로그인 성공 시 자체 JWT를 발급하고, unlink 모드에서는 사용자 정보와 Refresh Token을 삭제한 뒤 제공자 연동을 해제한다.
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 	
-	//HttpCookie..는 쿠키관련이고, ..UnlinkManager은 연동 해제(회원 탈퇴) 하는데 사용된다.
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final UserRepository userRepository;
     private final OAuth2UserUnlinkManager oAuth2UserUnlinkManager;
@@ -46,20 +44,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-    	
-    	log.info("OAuth2 SuccessHandler 진입");
 
         String targetUrl;
 
         targetUrl = determineTargetUrl(request, response, authentication);
 
         if (response.isCommitted()) {
-            logger.debug("Response has already been committed. Unable to redirect to " + targetUrl);
+        	log.debug("응답이 이미 커밋되어 리다이렉트할 수 없습니다.");
             return;
         }
 
-        clearAuthenticationAttributes(request, response);	// 임시정보를 정리한다.
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);	// 리다이렉트를 한다.
+        clearAuthenticationAttributes(request, response);	
+        getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
     // login 모드인지, unlink 모드인지 판단하고 targetUrl을 리턴한다.
@@ -80,62 +76,55 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2UserPrincipal principal = getOAuth2UserPrincipal(authentication);
 
         if (principal == null) {
+            log.warn("OAuth2 principal 변환 실패. principalType={}",
+                    authentication.getPrincipal().getClass().getName());
+        	
             return UriComponentsBuilder.fromUriString(targetUrl)
                     .queryParam("error", "Login failed")
                     .build().toUriString();
         }
 
         if ("login".equalsIgnoreCase(mode)) {
-        	String email = principal.getUsername();	// 이게 이메일
+        	String email = principal.getUsername(); // email을 username으로 사용한다.
         	
-            // 처음 로그인한다면 User 엔티티 만들고 db에 저장함, 따로 oauth2User 엔티티는 없고 Color도 저장안함.
+            // 최초 로그인 사용자는 User 엔티티를 생성해 저장한다.
+            // 별도의 OAuth2User 엔티티는 두지 않고 User.email을 기준으로 사용자를 식별한다.
             Optional<User> optionalUser = userRepository.findByEmail(email);
             User user;
 
-            if (optionalUser.isPresent()) { // 기존 유저 DB에서 가져옴
+            if (optionalUser.isPresent()) { 
                 user = optionalUser.get();
-            } else { // 저장된 유저가 없으면 DB에 저장 (회원가입 처리)
+            } else { 
                 User newUser = new User(email, email, Role.USER);
                 user = userRepository.save(newUser);
+                // log.info("OAuth2 신규 사용자 생성. email={}", email);
+                
                 // 추천서버 요청 (유저 생성)
                 // recommendService.createUser(user.getId());
             }
         	
-            // 서비스 자체 서버에서 액세스 토큰, 리프레시 토큰을 발급한다.
-        	// 엑세스토큰 발급.
+            // OAuth2 인증 성공 후 서비스 자체 JWT Access Token을 발급한다.
         	Map<String, Object> claims = Map.of(
         		    "email", principal.getUserInfo().getEmail(),
-        		    "role", user.getRole().name()	// TODO: Role enum을 String으로 저장했는데 잘되나 보기.
+        		    "role", user.getRole().name()
         		);
 
         		String accessToken = jwtTokenizer.generateAccessToken(
         		    claims,
         		    principal.getUserInfo().getEmail(),
-        		    new Date(System.currentTimeMillis() + 1000 * 60 * 15) // 15분짜리 Access Token
+        		    new Date(System.currentTimeMillis() + 1000 * 60 * 60) // 60분짜리 Access Token
         		);
         	
-            // 리프레시토큰 발급 후 레디스에 저장(db에 저장).
         		String refreshToken = jwtTokenizer.generateAndStoreRefreshToken(
         			principal.getUserInfo().getEmail(),
         			new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7) // 7일짜리 Refresh Token
         		);
         		
         		
-        		log.info(" 토큰 발급 완료 - accessToken={}, refreshToken={}",
-        			    accessToken.substring(0, 10),
-        			    refreshToken.substring(0, 10)
-        			);
-        		
-        	/*
-            log.info("email={}, name={}, nickname={}, accessToken={}", principal.getUserInfo().getEmail(),
-                    principal.getUserInfo().getName(),
-                    principal.getUserInfo().getNickname(),
-                    principal.getUserInfo().getAccessToken()
-            );
-            */
+                log.debug("OAuth2 로그인 성공 - JWT 발급 완료. email={}", email);
 
-            // targetUrl에 엑세스 토큰과 리프레시 토큰의 쿼리 패러미터를 붙여서 전송한다.
-            return UriComponentsBuilder.fromUriString(targetUrl)
+                // targetUrl에 엑세스 토큰과 리프레시 토큰의 쿼리 패러미터를 붙여서 전송한다.
+                return UriComponentsBuilder.fromUriString(targetUrl)
                     .queryParam("access_token", accessToken)
                     .queryParam("refresh_token", refreshToken)
                     .build().toUriString();
@@ -164,6 +153,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             return UriComponentsBuilder.fromUriString(targetUrl)
                     .build().toUriString();
         }
+        
+        log.warn("지원하지 않는 OAuth2 mode 요청. mode={}", mode);
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("error", "Login failed")

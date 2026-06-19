@@ -26,6 +26,7 @@ import java.util.List;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
+// 허용할 uri가 있으면 여기서 세팅해줘야한다.
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
@@ -59,15 +60,21 @@ public class SecurityConfig {
 
                         // 2. 인증 없이 누구나 접근 가능한 경로들을 명확하게 지정합니다.
                         .requestMatchers(
-                        		"/**",
                                 "/auth/**",
                                 "/oauth2/**",
                                 "/login/**",
+                                "/ws-stomp/**",
+                                "/api/rooms/exit"
+                        ).permitAll()
+                        
+                        .requestMatchers(HttpMethod.GET,
                                 "/api/covers",
-                                "/api/covers/**", // 모든 커버 관련 API 허용
-                                "/api/contents/{contentId}", // 컨텐츠 상세 보기 허용
-                                "/api/comments/by-content", // 댓글 보기 허용
-                                "/ws-stomp/**" // 웹소켓 연결 경로 허용
+                                "/api/covers/**",
+                                "/api/writings",
+                                "/api/writings/**",
+                                "/api/content/{contentId}",
+                                "/api/comments/by-content",
+                                "/api/rooms/{roomId}/enter"
                         ).permitAll()
                         
                         // 개발용 h2 콘솔
@@ -91,24 +98,28 @@ public class SecurityConfig {
      
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+    	
+    	/* 모든 cors 경로 허용(개발용)
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of("*")); // 모든 origin 허용
         config.setAllowedMethods(List.of("*")); // 모든 메서드 허용
         config.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
-        config.setAllowCredentials(true); // 쿠키 미허용 (true로 바꿔도 됨)
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config); // 모든 경로에 적용
         return source;
-        // CorsConfiguration config = new CorsConfiguration();
-        // config.setAllowCredentials(true);
-        // config.setAllowedOriginPatterns(List.of("http://localhost:5173")); // 프론트엔드 주소
-        // config.setAllowedHeaders(List.of("*"));
-        // config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        // config.setExposedHeaders(List.of("Authorization", "Authorization-Refresh"));
+        */
+        
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedOriginPatterns(List.of("http://localhost:5173")); // 프론트엔드 주소
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setExposedHeaders(List.of("Authorization", "Authorization-Refresh"));
 
-        // UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // source.registerCorsConfiguration("/**", config);
-        // return source;
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

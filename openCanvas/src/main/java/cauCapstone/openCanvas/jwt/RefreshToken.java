@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@RedisHash(value = "refreshToken", timeToLive = 86400) //RedisHash에 "refreshToken" : {id} 형태로 저장된다. TTL(유효시간)은 24시간이다.
+@RedisHash(value = "refreshToken", timeToLive = 604800) // Redis 저장 TTL: 7일
 public class RefreshToken {
 	
-	// 이게 JwtTokenizer에는 subject로 쓰임.
+	// subject은 email과 동일함.
 	@Id
 	private String email;
 	

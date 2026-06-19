@@ -9,7 +9,6 @@ import org.springframework.util.SerializationUtils;
 import java.util.Base64;
 import java.util.Optional;
 
-// TODO: 추후에 쿠키 관련 설정이 필요할 때 다시본다.
 public class CookieUtils {
 
     public static Optional<Cookie> getCookie(HttpServletRequest request, String name) {

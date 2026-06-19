@@ -29,23 +29,18 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
-
-    	System.out.println("=== OAuth2AuthenticationFailureHandler 진입 ===");
-    	System.out.println("예외 타입: " + exception.getClass().getName());
-    	System.out.println("예외 메시지: " + exception.getMessage());
     	
         String targetUrl = CookieUtils.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(Cookie::getValue)
-                .orElse(("/"));	// * 이 부분 쿠키가 없다면 로그인 화면으로 바꿔야함.
+                .orElse(("http://localhost:5173/"));	// 로그인이 실패했을 시 이 주소로 리다이렉트됨. 현재는 프론트의 첫화면으로 리턴하게되있음.
 
         targetUrl = UriComponentsBuilder.fromUriString(targetUrl)
-                .queryParam("error", exception.getLocalizedMessage())
+                .queryParam("error", "oauth2_authentication_failed")
                 .build().toUriString();
         
-
-        log.error("🔥 OAuth2 로그인 실패!");
-        log.error("예외 타입: {}", exception.getClass().getName());
-        log.error("예외 메시지: {}", exception.getMessage());
+        log.error("OAuth2 로그인 실패. type={}, message={}",
+                exception.getClass().getName(),
+                exception.getMessage());
 
         httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 

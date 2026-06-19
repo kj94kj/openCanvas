@@ -27,17 +27,14 @@ public class JwtTokenizer {
 	@Autowired
 	RefreshTokenRepository refreshTokenRepository;
 	
-	// application.yml에 저장된 secretkey를 가져옴.
 	@Value("${spring.jwt.secret-key}")
 	private String secretKey;
 	
-	// Secret key를 byte화 한다.
-	// base64EncodedSecretKey가 application.yml에 저장된 secretKey를 변환한것이라는걸 기억하기.
+	// base64EncodedSecretKey가 application.yml에 저장된 secretKey를 변환한 것이다.
 	public String encodeBase64SecretKey() {
 		return Encoders.BASE64.encode(secretKey.getBytes(StandardCharsets.UTF_8));
 	}
 	
-	// 어느 서버에서든 서버에서 access 토큰을 발급한다.
 	public String generateAccessToken(Map<String, Object> claims,
 			  String subject,
 			  Date expiration) {
@@ -46,14 +43,16 @@ public class JwtTokenizer {
 
 		return Jwts.builder()
 				.setClaims(claims) // 현재는 email과 role이 담기고있음.
-				.setSubject(subject) // 이메일/유저네임/유저아이디 중에 하나가 들어간다고 한다. 이메일을 넣는게 좋을듯. 수정가능함. 
-				.setIssuedAt(Calendar.getInstance().getTime()) // 언제 발행했는지
-				.setExpiration(expiration) // 만료기간 설정
-				.signWith(key) // 서명에 관련된 것. 검증에 필요하다.
+				.setSubject(subject) 
+				.setIssuedAt(Calendar.getInstance().getTime())
+				.setExpiration(expiration) 
+				.signWith(key)
 				.compact();
 	}
 	
-	// refresh 토큰을 발급하는데,유저정보는 access 토큰에 담겨서 담을 필요가 없다.
+	
+	// Refresh Token을 생성한다.
+	// Access Token과 달리 권한 정보는 담지 않고 subject만 담는다.
 	public String generateRefreshToken(String subject,
 			   Date expiration) {
 
@@ -67,7 +66,8 @@ public class JwtTokenizer {
 				.compact();
 	}
 	
-	// generateRefreshToken 메소드를 쓰고, 리프레시 토큰을 Redis에 저장함.
+	// Refresh Token을 생성한 뒤 Redis에 저장한다.
+	// subject를 key로 사용하므로 사용자당 하나의 refresh token만 유지된다.
 	public String generateAndStoreRefreshToken(String subject,
 			Date expiration) {
 		
@@ -85,24 +85,21 @@ public class JwtTokenizer {
 		return Keys.hmacShaKeyFor(keyBytes);
 	}
 	
-	// 서명(signature)을 통해 검증한다.
-	// 검증은 예외를 던지는 것으로 성공과 실패를 나눈다.
-	// claim은 유저정보, 발행일, 만료기간(위에 참조)가 들어가고 subject가 유저정보(id를 넣을수도 있고 나중에 정하기)
+	// JWT 서명을 검증하고 Claims를 반환한다.
+	// 서명 불일치, 만료, 형식 오류 등 검증 실패 시 예외가 발생한다.
 	public Claims verifySignature(String jws, String base64EncodedSecretKey) {
 		
 		try {
 			Key key = getKeyFromBase64EncodedKey(base64EncodedSecretKey);
-			// TODO: 이 Claims 정보를 담아야할 수도 있다.
 			Claims claims = Jwts.parserBuilder()
 					.setSigningKey(key)
 					.build()
 					.parseClaimsJws(jws)
 					.getBody();
 			
-			// 이런식으로 claims를 꺼낼 수 있다.
 			String subject = claims.getSubject();
 			
-	        log.info("Parsed Claims: " + claims);
+	        log.debug("Parsed Claims: " + claims);
 			return claims;
 			
 		} catch (JwtException e) {
@@ -121,9 +118,9 @@ public class JwtTokenizer {
 	    }
 	}
 	
-    
+    // 토큰들의 만료기간을 설정한다.
     public Date createAccessTokenExpiration() {
-        return new Date(System.currentTimeMillis() + 1000 * 60 * 15); // 15분
+        return new Date(System.currentTimeMillis() + 1000 * 60 * 60); // 1시간
     }
 
     public Date createRefreshTokenExpiration() {

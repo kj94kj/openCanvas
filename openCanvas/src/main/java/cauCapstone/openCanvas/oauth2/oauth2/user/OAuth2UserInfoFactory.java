@@ -4,8 +4,7 @@ import java.util.Map;
 
 import cauCapstone.openCanvas.oauth2.oauth2.exception.OAuth2AuthenticationProcessingException;
 
-// 엑세스 토큰으로 유저정보를 받아오고나서 구글 유저인지, 네이버 유저인지 등등 어디서 로그인했는지 파악해서 해당하는 Oauth2UserInfo 객체를 만들어서 리턴한다.
-// TODO: 구글밖에 안만들었지만, 확장가능하다.
+// registrationId를 보고 Google/Naver/Kakao 중 어떤 제공자인지 판단한 뒤, 제공자별 OAuth2UserInfo 구현체로 변환함.
 // Oauth2 엑세스 토큰으로 유저정보를 받은 것이다.
 public class OAuth2UserInfoFactory {
     public static OAuth2UserInfo getOAuth2UserInfo(String registrationId,
