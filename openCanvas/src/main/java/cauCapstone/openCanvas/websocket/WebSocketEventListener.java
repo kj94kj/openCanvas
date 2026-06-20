@@ -25,16 +25,12 @@ public class WebSocketEventListener {
     public void handleSessionDisconnect(SessionDisconnectEvent event) {
         String sessionId = event.getSessionId();
 
-        // 세션 ID로부터 roomId와 userId(subject)를 알아낸다.
         String subject = sessionRepository.getSubjectBySessionId(sessionId);
         String roomId =  subscribeRepository.getRoomIdBySubject(subject);
 
         if (roomId != null && subject != null) {
             log.info("DISCONNECT 발생: session={}, room={}, user={}", sessionId, roomId, subject);
 
-            // disconnect 상태 기록 (3분 TTL)
-            // 3분동안 안들어오면(DISCONNECT) 기본적으로 의도적으로 나갔다고 판단하고, 
-            // 클라이언트도 정상적이지 않다는 것을 인지하는 상황이라 프론트에 알리진 않는다(해당 유저에대한 메시지 보내지않음).   
             subscribeRepository.makeDisconnectKey(roomId, subject);
             
         }

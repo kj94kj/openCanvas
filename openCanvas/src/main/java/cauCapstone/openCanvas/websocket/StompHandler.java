@@ -28,38 +28,33 @@ public class StompHandler implements ChannelInterceptor{
     private final SubscribeRepository subscribeRegistryService;
 	private final RedisPublisher redisPublisher;
 	
+	// stompcommand 상태를 읽고 동작 처리 후에 메시지를 발행한다.
 	@Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         
         String base64EncodedSecretKey = jwtTokenizer.encodeBase64SecretKey();
         
-        // websocket 연결시(Stompcommand.CONNECT) 헤더의 jwt token 검증
-        // 토큰을 꺼내서 redis에 sessionId, subject(유저 정보) 저장.
-        // 토큰은 connect 상태에서(웹소켓 연결 상태)만 꺼내고 나중에는 유저정보는 sessionId를 이용해 redis에서 참조하도록함.
+        // 토큰은 connect 상태에서만 꺼내고 나중에는 유저정보는 sessionId를 이용해 redis에서 참조하도록함.
         if (StompCommand.CONNECT == accessor.getCommand()) {
-        	
-        	// TODO: 프론트에서는 bearer 붙이지 않고 전달한다.
+
             try {
             	String rawToken = accessor.getFirstNativeHeader("token");
             	if (rawToken != null && rawToken.startsWith("Bearer ")) {
-            	    rawToken = rawToken.substring(7); // "Bearer " 잘라내기
+            	    rawToken = rawToken.substring(7);
             	}
 
-            	// null 체크하고 검증
             	if (rawToken != null && !rawToken.isBlank()) {
             	    Claims claims = jwtTokenizer.verifySignature(rawToken, base64EncodedSecretKey);
             	    String subject = claims.getSubject();
             	    String sessionId = accessor.getSessionId();
-                	// null 체크하고 검증
+            	    
             	    sessionRegistryService.registerSession(sessionId, subject);
             	}
             } catch (Exception e) {
                 log.error("Error while verifying token", e);
             }
 
-        
-        // 문서방 구독시(Stompcommand.SUBSCRIBE) roomId를 추출하고, sessionId, subject, roomId를 저장.
         }else if (StompCommand.SUBSCRIBE == accessor.getCommand()) {
         	
         	String destination = accessor.getDestination();
@@ -70,22 +65,18 @@ public class StompHandler implements ChannelInterceptor{
         	
         	subscribeRegistryService.registerSubscribe(roomId, sessionId, subject);
         	
-        	// StompCommand같은 경우는 StompCommand.SEND가 아니면 메시지가 발행이 안되기 때문에 그 외의 경우엔 메시지 발행을 따로 해준다.
         	ChatMessage updateMessage = new ChatMessage();
         	updateMessage.setType(ChatMessage.MessageType.UPDATE);
         	updateMessage.setRoomId(roomId);
         	updateMessage.setSubject(subject);
         	updateMessage.setMessage(subject+" 유저가 "+roomId+"를 구독함.");
         
-        	// 3분 TTL 키에 해당하는 부분을 실제 키가 있던 없던 지우는 동작을 한다.
+            // 재접속한 사용자라면 disconnectKey를 삭제한다.
         	subscribeRegistryService.removeDisconnectKey(roomId, subject);
 
             log.debug(updateMessage.getMessage()+" 메시지 전송을 시도함.");
             redisPublisher.publish(new ChannelTopic(roomId), updateMessage);
 
-        	
-        // 문서방 구독해제시(StompCommand.UNSUBSCRIBE) sessionId, subject와 연결한 roomId 정보를 삭제.
-        // TODO: UNSUSCRIBE, DISCONNECT 둘다 문서방을 명시적으로 나간거라 로직이 같아야할 수도 있음.
         }else if (StompCommand.UNSUBSCRIBE == accessor.getCommand()) {
         	String sessionId = accessor.getSessionId();
         	
@@ -93,9 +84,7 @@ public class StompHandler implements ChannelInterceptor{
         	String roomId = subscribeRegistryService.getRoomIdBySubject(subject);
         	
         	if(roomId != null && subject != null) {
-            	// 여기 removesubscribe지움
-        		
-            	// StompCommand같은 경우는 StompCommand.SEND가 아니면 메시지가 발행이 안되기 때문에 그 외의 경우엔 메시지 발행을 따로 해준다.
+
             	ChatMessage updateMessage = new ChatMessage();
             	updateMessage.setType(ChatMessage.MessageType.UPDATE);
             	updateMessage.setRoomId(roomId);
@@ -104,18 +93,14 @@ public class StompHandler implements ChannelInterceptor{
 
             	redisPublisher.publish(new ChannelTopic(roomId), updateMessage);
         	}else {
-        		// 문서방이 사라졌을때 동작을 적어야한다.
+        		
         		if(subject != null) {
             		subscribeRegistryService.removeSuscribe(subject);
         		}
         	}
         	
             sessionRegistryService.removeSession(sessionId);
-        
-        	
-        // 웹소켓 연결해제시(StompCommand.DISCONNECT)  sessionId, subject와 연결한 roomId 정보를 삭제하고 sessionId와 subject도 삭제.
-        // 만약 연결만 끊긴다면 DISCONNECT가 되고 SUBSCRIBE를 다시 해야하지만 UNSUBSCRIBE 상태는 아니다.
-        // 이 경우는 프론트에서 DISCONNECT 프레임을 보냈을 때 이다(예기치 않게 끊긴 경우가 포함되지 않음).
+       
         }else if (StompCommand.DISCONNECT == accessor.getCommand()) {
         	String sessionId = accessor.getSessionId();
         	
@@ -123,9 +108,7 @@ public class StompHandler implements ChannelInterceptor{
         	String roomId = subscribeRegistryService.getRoomIdBySubject(subject);
         	
         	if(roomId != null && subject != null) {
-        		// 여기 removesubscribe 지움.
-            	
-            	// StompCommand같은 경우는 StompCommand.SEND가 아니면 메시지가 발행이 안되기 때문에 그 외의 경우엔 메시지 발행을 따로 해준다.
+
             	ChatMessage updateMessage = new ChatMessage();
             	updateMessage.setType(ChatMessage.MessageType.UPDATE);
             	updateMessage.setRoomId(roomId);
@@ -134,7 +117,7 @@ public class StompHandler implements ChannelInterceptor{
 
             	redisPublisher.publish(new ChannelTopic(roomId), updateMessage);
         	}else {
-        		// 문서방이 사라졌을때 동작을 적어야한다.
+        		
         		if(subject != null) {
             		subscribeRegistryService.removeSuscribe(subject);
         		}
@@ -153,8 +136,8 @@ public class StompHandler implements ChannelInterceptor{
 	    if (destination == null) return null;
 
 	    String[] parts = destination.split("/");
-	    if (parts.length >= 4) {
-	        return parts[4]; // roomId 위치
+	    if (parts.length >= 5) {
+	        return parts[4];
 	    }
 	    return null;
 	}

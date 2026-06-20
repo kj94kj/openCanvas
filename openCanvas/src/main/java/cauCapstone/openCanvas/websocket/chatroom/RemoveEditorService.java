@@ -7,11 +7,9 @@ import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.websocket.chatmessage.ChatMessage;
 import cauCapstone.openCanvas.websocket.chatmessage.RedisPublisher;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-// SubscribeRegistryService에서 순환구조 때문에 분리함. 주의.
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -20,7 +18,6 @@ public class RemoveEditorService {
 	private final RedisPublisher redisPublisher;
 	private final SubscribeRepository subscribeRepository;
 	
-	// 이걸로 편집자인지 판단하고 sanpshotService.saveSnapshotToDB() 하고 removeEditorSubject()하면됨.
     public boolean isEditor(String subject) {
     	String roomId = subscribeRepository.getRoomIdBySubject(subject);
     	
@@ -36,15 +33,11 @@ public class RemoveEditorService {
     	return false;
     }
 	
-    // 단순 disconnect상태가 아닌 문서편집자가 문서방을 나갈때 호출해야한다.
-    // 유저들은 문서방이 닫혀도 SUSCRIBE 상태를 유지하기 때문에 유저들의 상태를 UNSUSCRIBE로 바꾸라는 메시지를 프론트에 보낸다.
-    // 문서방 관련 정보(subject-> roomId, roomId -> subjects, roomId -> editorSubject) 삭제
+    // 단순 disconnect상태가 아닌 문서편집자가 문서방을 나갈때 호출해야한다. 문서방에 있는 다른 유저들에게 종료하라는 메시지를 보낸다.
     public String removeEditorSubject(String subject) {
     	
     	String roomId = subscribeRepository.getRoomIdBySubject(subject);
     	
-    	
-        // 구독 정보 삭제 !!! 위에다가넣을지생각.
         subscribeRepository.removeSuscribe(subject); // subject -> roomId, roomId -> subject
     	
     	if(roomId != null) {
@@ -53,76 +46,38 @@ public class RemoveEditorService {
         
         	if(editorSubject != null && subject.equals(editorSubject)) {
             	Set<String> subjects = subscribeRepository.getSubjectsByRoomId(roomId);
-				log.info("📢 ROOMOUT 보낼 대상 subjects: {}", subjects);
 				
                 sendROOMOUTmessage(subjects, roomId);
 				
                 subscribeRepository.removeEditorSubjectKey(roomId); // roomId -> editorSubject
-				log.info(" removing editorSubjectKey for roomId={}", roomId);
 				
-                // 락키를 삭제한다.
             	subscribeRepository.removeLockKey(roomId);
-				log.info(" removing lock key for roomId={}", roomId);
-				
-				
-            	
+
             	return roomId;
         	}else {
-        		log.info("subject 인증 실패. editor가 아님.");
+        		log.warn("편집자가 아님: subject={}", subject);
        
         	}
     	}else {
-            log.info("subject 인증 실패. roomId없음.");
+            log.warn("subject 인증 실패. roomId없음.");
 
     	}
     	
     	return null;
     }
     
-    @Schema(description = "프론트에서는 messageType.ROOMOUT인 메시지가 온다면 구독 해제, 웹소켓 연결을 끊으면 됩니다.")
-    // messageType가 ROOMOUT인 메시지를 보내고 받은 유저는 문서방이 닫혔으므로 구독 해제, 웹소켓 연결을 끊어야함.
     public void sendROOMOUTmessage(Set<String> subjects, String roomId) {
         if (subjects == null || subjects.isEmpty()) {
-            log.info("ROOMOUT 보낼 대상 없음. roomId={}", roomId);
+            log.warn("ROOMOUT 보낼 대상 없음. roomId={}", roomId);
             return;
         }
 
         ChatMessage roomOutMessage = new ChatMessage();
         roomOutMessage.setType(ChatMessage.MessageType.ROOMOUT);
         roomOutMessage.setRoomId(roomId);
-        roomOutMessage.setSubject(null); // 특정 유저 대상 아님. 방 전체 알림.
+        roomOutMessage.setSubject(null);
         roomOutMessage.setMessage("작성자가 작성을 마쳤습니다. 종료하기 버튼을 눌러주세요.");
 
         redisPublisher.publish(new ChannelTopic(roomId), roomOutMessage);
     }
-    
-    /*@Schema(description = "프론트에서는 messageType.ROOMOUT인 메시지가 온다면 구독 해제, 웹소켓 연결을 끊으면 됩니다.")
-    // messageType가 ROOMOUT인 메시지를 보내고 받은 유저는 문서방이 닫혔으므로 구독 해제, 웹소켓 연결을 끊어야함.
-    public void sendROOMOUTmessage(Set<String> subjects, String roomId) {
-    	if(subjects!=null) {
-        	for(String sub : subjects) {
-            	ChatMessage roomOutMessage = new ChatMessage();
-            	roomOutMessage.setType(ChatMessage.MessageType.ROOMOUT);
-            	roomOutMessage.setRoomId(roomId);
-            	roomOutMessage.setSubject(sub);
-            	// roomOutMessage.setMessage(sub+" 유저를 "+roomId+"를 UNSUBSCRIBE 해야함.");
-                roomOutMessage.setMessage("작성자가 작성을 마쳤습니다. 종료하기 버튼을 눌러주세요.");
-
-            	redisPublisher.publish(new ChannelTopic(roomId), roomOutMessage);
-        	}
-    	}
-    }*/
-    
-    /*
-    public String forceR(String subject, String roomId) {
-        // 구독 정보 삭제
-        subscribeRepository.removeSuscribe(subject); // subject -> roomId, roomId -> subject
-        subscribeRepository.removeEditorSubjectKey(roomId); // roomId -> editorSubject
-        
-        // 락키를 삭제한다.
-    	subscribeRepository.removeLockKey(roomId);
-        
-        return null;
-    }
-    */
 }

@@ -2,12 +2,9 @@ package cauCapstone.openCanvas.websocket.chatroom;
 
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.service.WritingService;
-import cauCapstone.openCanvas.websocket.chatmessage.ChatMessage;
-import cauCapstone.openCanvas.websocket.snapshot.SnapshotService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.redis.connection.ReactiveSubscription.Message;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,17 +20,18 @@ public class ChatRoomController {
 
     private final WritingService writingService;
     private final ChatRoomService chatRoomService;
-    private final SnapshotService snapshotService;
+    // private final SnapshotService snapshotService;
 
     @PostMapping("/{roomId}/create")
     @Operation(
-    	    summary = "문서방 생성 및 입장",
-    	    description = "편집자가 문서방을 생성하고 바로 입장합니다. "
-    	    		+ "이전 글들도 불러오고 입장하고나면 웹소켓 연결을 해야한다."
-    	    		+ "WritingDto를 받는데 최초 작성시 title만 지정해주고 버전은 1.1.0이라고 설정함, "
-    	    		+ "이어쓰는 경우에는 WritingDto에 부모의 depth, siblingIndex가 필요함,"
-    	    		+ "ChatRoomDto를 반환함."
-    	)
+            summary = "문서방 생성",
+            description = """
+                    편집자가 문서방을 생성하고 기존 글 이력을 조회합니다.
+                    최초 작성인 경우 title만 전달하며 버전은 1.1로 생성됩니다.
+                    이어쓰기인 경우 부모 글의 depth와 siblingIndex가 필요합니다.
+                    생성 이후 별도로 WebSocket에 연결해야 합니다.
+                    """
+    )
     public ResponseEntity<?> createRoomAndEnter(@RequestBody WritingDto writingDto,
             										@PathVariable(name = "roomId") String roomId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -74,10 +72,11 @@ public class ChatRoomController {
     
     @GetMapping("/{roomId}/enter")
     @Operation(
-        summary = "문서방 참여 (구독자)",
-        description = "roomId를 통해 기존 문서방에 구독자로 참여합니다. "
-                    + "이전 글들의 히스토리를 받아옵니다. 웹소켓 연결 전 조회용으로 사용됩니다,"
-                    + "roomId를 받고, ChatRoomDto를 리턴한다."
+            summary = "문서방 참여 정보 조회",
+            description = """
+                    구독자로 참여할 문서방의 정보와 기존 글 이력을 조회합니다.
+                    조회 이후 별도로 WebSocket에 연결하고 문서방 토픽을 구독해야 합니다.
+                    """
     )
     public ResponseEntity<?> enterRoomAsSubscriber(@PathVariable(name = "roomId") String roomId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -94,12 +93,11 @@ public class ChatRoomController {
 
         List<WritingDto> history = writingService.getWritingsWithRoomId(roomId);
         
-        /*
-        // 현재까지의 스냅샷을 마지막 writingDto로 전달
-        List<ChatMessage> snapshotList = snapshotService.giveSnapshot(roomId);
-        */
-       
-        
+
+        // TODO: 블록 단위 편집 구현 시 저장된 스냅샷을 입장 응답에 포함한다.
+        // 현재는 블럭번호 1만 사용함. 따라서 작성중인 문서의 전체 내용을 전송하므로 별도의 스냅샷 조회가 필요하지 않다.
+        // List<ChatMessage> snapshotList = snapshotService.giveSnapshot(roomId);
+
         ChatRoomDto chatRoomDto = ChatRoomDto.fromEntity(chatRoom, history); 
 
         return ResponseEntity.ok(chatRoomDto);
