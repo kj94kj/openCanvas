@@ -15,7 +15,6 @@ import cauCapstone.openCanvas.rdb.entity.RoomType;
 
 public interface CoverRepository extends JpaRepository<Cover, Long>{
 
-	// 좋아요 순으로 정렬하기.
 	@Query("""
 		    SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(
 		        c.id, c.title, c.coverImageUrl, c.time,
@@ -32,7 +31,6 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
 		""")
 		Page<CoverDto> findAllOrderByLikeCountDesc(Pageable pageable);
     
-    // 조회수 순으로 정렬하기.
 	@Query("""
 		    SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(c.id, c.title, c.coverImageUrl, c.time,
 		    COALESCE(ct.view, 0), COALESCE(COUNT(l), 0), c.roomType, c.roomId, c.limit)
@@ -45,8 +43,6 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
 		""")
 		Page<CoverDto> findAllOrderByViewDesc(Pageable pageable);
     
-    
-    // 모든 커버의 좋아요 수와 조회수를 세고 최신순으로 커버dto 리턴.
     @Query("""
     	    SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(c.id, c.title, c.coverImageUrl, c.time,
     	    COALESCE(ct.view, 0), COALESCE(COUNT(l), 0), c.roomType, c.roomId, c.limit)
@@ -81,7 +77,6 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
     	""")
     	List<CoverDto> searchByTitleKeyword(@Param("keyword") String keyword);
     
-    	// 안쓰는듯.
     	Optional<Cover> findByTitle(String title);
     	
     	Optional<Cover> findByRoomId(String roomId);

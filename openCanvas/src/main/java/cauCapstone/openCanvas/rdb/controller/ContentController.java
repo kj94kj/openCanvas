@@ -6,7 +6,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import cauCapstone.openCanvas.rdb.dto.ContentDto;
 import cauCapstone.openCanvas.rdb.dto.FinalContentDto;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
 import cauCapstone.openCanvas.rdb.service.ContentService;
@@ -20,23 +19,16 @@ public class ContentController {
 
     private final ContentService contentService;
 
-    /*
-    @GetMapping("/{coverId}")
-    @Operation(summary = "컨텐츠 조회", description = "커버 ID에 해당하는 컨텐츠를 조회하거나 없으면 생성하며, "
-    		+ "조회수 증가 및 내가 좋아요 또는 싫어요를 눌렀는지도 알려줌,"
-    		+ "coverId가 필요하고, 성공했을때는 contentDto를 실패했을때는 string을 리턴함")
-    public ResponseEntity<?> getContent(@PathVariable(name = "coverId") Long coverId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인되지 않음");
-        }
-        String email = (String) auth.getPrincipal();
-        ContentDto contentDto = contentService.getContent(coverId, email, true);
-        return ResponseEntity.ok(contentDto);
-    }
-    */
-
     @PostMapping("/like-toggle")
+    @Operation(
+        summary = "컨텐츠 좋아요/싫어요 토글",
+        description = """
+            로그인한 사용자가 특정 컨텐츠에 좋아요 또는 싫어요를 토글합니다.
+            coverId와 likeType이 필요합니다.
+            likeType 값은 LIKE 또는 DISLIKE입니다.
+            이미 같은 반응을 누른 경우 취소되고, 반대 반응을 누른 경우 변경됩니다.
+            """
+    )
     public ResponseEntity<?> toggleLike(
             @RequestParam(name = "coverId") Long coverId,
             @RequestParam(name = "likeType") LikeType likeType) {
@@ -49,8 +41,14 @@ public class ContentController {
         return ResponseEntity.ok(contentService.toggleLike(email, coverId, likeType));
     }
     
-    // 처음에 유저가 좋아요 눌렀는지 확인용
     @GetMapping("/like-check")
+    @Operation(
+    	    summary = "컨텐츠 좋아요/싫어요 여부 확인",
+    	    description = """
+    	        로그인한 사용자가 특정 컨텐츠에 좋아요 또는 싫어요를 눌렀는지 확인합니다.
+    	        coverId가 필요합니다.
+    	        """
+    	)
     public ResponseEntity<?> likeCheck(
             @RequestParam(name = "coverId") Long coverId) {
 
@@ -63,7 +61,13 @@ public class ContentController {
     }
     
     @GetMapping("/{coverId}")
-    @Operation(summary = "컨텐츠 조회")
+    @Operation(
+    	    summary = "컨텐츠 조회",
+    	    description = """
+    	        coverId에 해당하는 컨텐츠를 조회합니다.
+    	        조회 결과는 FinalContentDto로 반환됩니다.
+    	        """
+    	)
     public ResponseEntity<FinalContentDto> getContent(@PathVariable("coverId") Long coverId) {
         return ResponseEntity.ok(contentService.getFinalContentByCoverId(coverId));
     }

@@ -15,36 +15,39 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "표지 정보에 관한 dto 응답용,"
-		+ "제목 이미지 타임스탬프 조회수 좋아요개수 응답함")
+@Schema(description = """
+		표지 정보 응답 DTO.
+		제목, 표지 이미지, 생성 시간, 조회수, 좋아요 수, 문서방 상태 정보를 포함한다.
+		""")
 public class CoverDto {
 	@Schema(description = "coverId")
 	private Long id;
+	
 	@Schema(description = "글 제목")
 	private String title;
+	
 	@Schema(description = "이미지url")
 	private String coverImageUrl;
+	
 	@Schema(description = "전체 글 관련 dto")
 	private Long contentId;
+	
 	@Schema(description = "타임스탬프")
 	private LocalDateTime time;
 	
-	// 조회수
 	@Schema(description = "조회수")
 	private Integer view;
-	// 좋아요 개수
+
 	@Schema(description = "좋아요갯수")
 	private Long likeCount;	// TODO: 나중에 잘 안되면 (int) 해서 타입바꾸기.
 	
-	@Schema(description = "편집중일때; EDITING (roomId와 같이 실림)"
-			+ "편집 가능할때; AVAILABLE"
-			+ "완성했을때; COMPLETE")
+	@Schema(description = "문서방 상태. EDITING: 편집 중, AVAILABLE: 편집 가능, COMPLETE: 완성")
 	private RoomType roomType;
 	
 	@Schema(description = "현재 편집중인 문서방의 id")
 	private String roomId;
 	
-	@Schema(description = "최대 이어쓸 수 있는 작가수 한계")
+	@Schema(description = "최대 이어쓸 수 있는 작가의 수")
 	private Integer limit;
 	
 	public CoverDto(Long id, String title, String coverImageUrl, Long contentId, LocalDateTime time, Integer limit
@@ -77,17 +80,8 @@ public class CoverDto {
 	}
 	
 	
-	/*
-	// 커버 화면에 좋아요 수까지 보임, content는 가져오지 않음.
-	public static CoverDto fromEntityWithLike(Cover cover, int likeNum) {
-		ContentDto contentDto = ContentDto.fromEntity(cover.getContent());
-		
-		return new CoverDto(cover.getTitle(), cover.getCoverImageUrl(), contentDto, cover.getTime(), likeNum);
-	}
-	*/
-	
 	public Cover toEntity() {
 		return new Cover(title, coverImageUrl, limit);
-	}	// 좋아요 개수
+	}
 	
 }

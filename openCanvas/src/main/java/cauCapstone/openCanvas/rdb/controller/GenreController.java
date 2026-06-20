@@ -42,7 +42,6 @@ public class GenreController {
         return ResponseEntity.ok(savedGenres);
     }
 
-    // ✅ 전체 장르 목록 조회
     @GetMapping("/all")
     public ResponseEntity<List<String>> getAllGenres() {
         return ResponseEntity.ok(genreService.getAllGenres());
@@ -55,7 +54,6 @@ public class GenreController {
         return ResponseEntity.ok(genreService.getGenre(contentId));
     }
 
-    // ✅ 장르명으로 검색하여 해당 장르의 CoverDto 리스트 반환
     @Operation(summary = "장르로 검색하면 coverDto 반환", description = "장르 이름으로 검색하면 coverDto반환")
     @GetMapping("/search")
     public ResponseEntity<List<CoverDto>> searchGenre(@RequestParam(name = "genreName") String genreName) {

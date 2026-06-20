@@ -28,12 +28,12 @@ public class Report {
 	@GeneratedValue
 	private Long id;
 	
-	private String body;	// 신고내용
+	private String body;	
     private LocalDateTime time;
 	
     @ManyToOne
 	@JoinColumn(name = "writing_id")
-	private Writing writing;	// 신고받은 writing
+	private Writing writing;
     
     public Report(String body, Writing writing) {
         this.body = body;

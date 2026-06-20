@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// 캔버스 내용에 관한 엔티티. 글 내용을 리스트 형태로 갖는다.
+// 캔버스 내용에 관한 엔티티. content로 칭한다.
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
@@ -32,20 +32,15 @@ public class Content {
 	@GeneratedValue
 	private Long id;
 	
-	// 조회수
 	private int view;
 	
-	// 댓글
-	// 부모가 삭제되면 자식도 같이 삭제됨.
 	@OneToMany(mappedBy = "content", cascade = CascadeType.REMOVE)
 	private List<Comment> comments = new ArrayList<>();
 	
 	
-	// content 안의 글 내용을 트리구조
 	@OneToMany(mappedBy = "content", cascade = CascadeType.REMOVE)
 	private List<Writing> writings = new ArrayList<>();
 	
-	// 좋아요갯수
 	@OneToMany(mappedBy = "content", cascade = CascadeType.REMOVE)
 	private List<Like> likes = new ArrayList<>();
 	

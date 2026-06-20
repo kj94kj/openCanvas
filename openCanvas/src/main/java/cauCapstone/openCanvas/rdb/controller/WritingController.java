@@ -10,9 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
-import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
-import cauCapstone.openCanvas.rdb.service.ContentService;
 import cauCapstone.openCanvas.rdb.service.WritingService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,6 @@ public class WritingController {
 
     private final WritingService writingService;
 
-    // 다른 메소드에서 써야함.
     @PostMapping("/check")
     @Operation(summary = "글 작성 가능 여부 확인", description = "현재 depth의 하위에 글을 더 작성할 수 있는지 확인하고, 가능한 siblingIndex를 반환합니다.")
     public ResponseEntity<?> checkWriting(
@@ -39,13 +36,13 @@ public class WritingController {
         }
     }
 
-    // 스냅샷관련
+    // 스냅샷이 관련되어있음.
     @PostMapping
     @Operation(summary = "글 저장", description = "WritingDto를 전달받아 글을 저장합니다.")
     public ResponseEntity<?> saveWriting(@RequestBody WritingDto writingDto) {
         try {
             return ResponseEntity.ok(writingService.saveWriting(writingDto));
-        } catch (Exception e) {
+        }catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
@@ -117,16 +114,19 @@ public class WritingController {
             List<WritingDto> result = writingService.getWritingsWithRoomId(roomId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
     
-    @GetMapping("/get/offical")
-    @Operation(summary = "official로 지정한 글을 가져옵니다.", description = "만약 유저가 채택하고 싶은 글이 있고"
-    		+ "official로 채택한 버전이 있으면 루트부터 그 글까지 가져옵니다."
-    		+ "지정을 하지 않으면 루트에 해당되는 글만 불러옵니다."
-    		+ "contentDto를 요청하고 contentDto를 받으면 바로 호출해야합니다."
-    		+ "contentDto를 받고 List<WritingDto>를 리턴합니다.")
+    @GetMapping("/get/official")
+    @Operation(
+    	    summary = "공식 글 경로 조회",
+    	    description = """
+    	        official로 지정된 글이 있으면 루트 글부터 official 글까지의 경로를 조회합니다.
+    	        official 글이 지정되지 않은 경우 루트 글만 반환합니다.
+    	        ContentDto를 요청 본문으로 전달해야 하며, List<WritingDto>를 반환합니다.
+    	        """
+    	)
     public ResponseEntity<List<WritingDto>> getOffical(@RequestBody ContentDto contentDto){
     	List<WritingDto> writingDtos = writingService.getOfficial(contentDto);
     	return ResponseEntity.ok(writingDtos);
@@ -148,8 +148,6 @@ public class WritingController {
         String email = (String) auth.getPrincipal();
     	
     	List<WritingDto> writingDtos = writingService.setOfficial(writingDto, email);
-    	
-    	// TODO: 여기서 장르 서비스 불러야함.
     	
     	return ResponseEntity.ok(writingDtos);
     }

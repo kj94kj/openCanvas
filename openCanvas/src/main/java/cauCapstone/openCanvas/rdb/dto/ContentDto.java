@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Cover;
-import cauCapstone.openCanvas.rdb.entity.Genre;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -14,14 +13,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// TODO: 추가한 필드 title 때문에 문제생기나 확인
 @Getter 
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "전체 글 관련 dto, 응답용"
-		+ "요청할때는 대부분 coverId로 요청함"
-		+ "댓글, 글조각 목록, 좋아요, 제목, 커버dto, 좋아요갯수, 유저가 그 글에 좋아요/싫어요를 눌렀는지 리턴함")
+@Schema(description = """
+		전체 글 상세 응답 DTO.
+		커버, 댓글 목록, 글 조각 목록, 좋아요 정보, 조회수, 장르 정보를 포함한다.
+		""")
 public class ContentDto {
 	@Schema(description = "id")
 	private Long id;
@@ -30,8 +29,7 @@ public class ContentDto {
 	
 	@Schema(description = "댓글dto")
 	private List<ResCommentDto> commentDtos = new ArrayList<>();
-	@Schema(description = "조각글들을 모두 리턴함, 글 내용이 아직 필요없을 때는 "
-			+ "depth, siblingIndex, title, username로 만든 dto가 리턴됨")
+	@Schema(description = "이 글에 포함된 글 조각 목록")
 	private List<WritingDto> writingDtos = new ArrayList<>();
 	@Schema(description = "글에 있는 좋아요 정보를 리턴")
 	private List<LikeDto> likeDtos = new ArrayList<>();
@@ -45,8 +43,9 @@ public class ContentDto {
 	private LikeType likeType;
 	
 	@Schema(description = "제목")
-	private String title;	// title 항목 추가
+	private String title;
 	
+	@Schema(description = "대표적인 버전")
 	private String official;
 	
 	@Schema(description = "해당 official의 장르 리스트 (예: 판타지, 스릴러 등)")

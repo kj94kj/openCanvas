@@ -30,7 +30,6 @@ public class CommentLike {
 	@JoinColumn(name = "user_id")
 	private User user;
 	
-	// true면 좋아요, false면 싫어요
     @Enumerated(EnumType.STRING)
 	private LikeType likeType;
 }

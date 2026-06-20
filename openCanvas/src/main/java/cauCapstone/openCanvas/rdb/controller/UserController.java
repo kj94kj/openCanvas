@@ -12,13 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import cauCapstone.openCanvas.rdb.dto.ContentDto;
-import cauCapstone.openCanvas.rdb.dto.CoverDto;
 import cauCapstone.openCanvas.rdb.dto.MyLikedCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
-import cauCapstone.openCanvas.rdb.dto.UserDto;
 import cauCapstone.openCanvas.rdb.dto.UserResponseDto;
-import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.User;
 import cauCapstone.openCanvas.rdb.service.UserService;
 import cauCapstone.openCanvas.rdb.service.WritingService;
@@ -33,10 +29,11 @@ public class UserController {
     private final UserService userService;
     private final WritingService writingService;
 
-    // 유저의 색상을 변경하는 API
     @PutMapping("/color")
-    @Operation(summary = "유저가 글쓰는 색상을 변경", description = "처음에 웹을 시작할 때 색깔을 설정하게 하면 된다, "
-    		+ "color 지정 필요(임시로 string 타입으로함)")
+    @Operation(
+    	    summary = "사용자 글쓰기 색상 변경",
+    	    description = "현재 로그인한 사용자의 글쓰기 색상을 변경합니다. color 값이 필요합니다."
+    	)
     public ResponseEntity<String> updateColor(@RequestParam(name = "color") String color) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -50,15 +47,14 @@ public class UserController {
         return ResponseEntity.ok("색상 변경 성공: " + updatedUser.getColor());
     }
 
-    // 유저가 좋아요한 커버 목록 반환
     @GetMapping("/likes")
     @Operation(summary = "유저가 좋아요한 coverDto 반환", description = "유저가 좋아요한 coverDto 반환, "
-    		+ "좋아요 누른 작품을 찾을 수 있다")
+    		+ "좋아요를 누른 작품을 찾을 수 있습니다.")
     public ResponseEntity<List<MyLikedCoverResponseDto>> getLikedContents() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String email = (String) auth.getPrincipal();
@@ -83,6 +79,10 @@ public class UserController {
     }
     
     @GetMapping("/writings")
+    @Operation(
+    	    summary = "내가 작성한 커버 목록 조회",
+    	    description = "현재 로그인한 사용자가 작성한 작품 목록을 조회합니다."
+    	)
     public ResponseEntity<List<MyWritingCoverResponseDto>> getMyWritingCovers() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 

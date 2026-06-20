@@ -16,8 +16,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// 댓글에 관한 엔티티.
-// TODO: Writing 파트를 추가해야할 수도 있음(어느 문단에 대해 얘기하고 있는지).
 @NoArgsConstructor
 @Setter
 @Getter
@@ -42,7 +40,6 @@ public class Comment {
 	// 댓글 본문
 	private String body;
 	
-	// 댓글 달린 시간
 	private LocalDateTime time;
 	
 	public Comment(Content content, User user, String body, LocalDateTime time) {

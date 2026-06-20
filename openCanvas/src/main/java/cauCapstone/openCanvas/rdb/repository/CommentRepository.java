@@ -8,19 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import cauCapstone.openCanvas.rdb.entity.Comment;
-import cauCapstone.openCanvas.rdb.entity.CommentLike;
-import cauCapstone.openCanvas.rdb.entity.LikeType;
 
 public interface CommentRepository extends JpaRepository<Comment, Long>{
 	
-	// 댓글의 좋아요를 가져오기.
+    // 댓글 조회 시 좋아요 목록까지 함께 조회한다.
 	@Query("SELECT c FROM Comment c LEFT JOIN FETCH c.commentLikes WHERE c.id = :id")
 	Optional<Comment> findByIdWithCommentLikes(@Param("id") Long id);
 	
-	// 고른 댓글을 userId와 contentId로 확인함. 댓글 삭제용.
 	Optional<Comment> findByIdAndUserIdAndContentId(Long id, Long userId, Long contentId);
 	
-	// 글에(Content) 있는 댓글을 가져옴.
 	List<Comment> findByContentId(Long contetnId);
 	
 }

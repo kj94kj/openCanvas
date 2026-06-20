@@ -28,15 +28,12 @@ public class ReportService {
     
     private final JavaMailSender mailSender;
 	
-    // 신고내용을 담아서 메일로 보내는 메소드.
-    // TODO: 신고내용은 추후에 생각하기.
     @Transactional
     public void report(ReportDto reportDto) {
         Writing target = writingRepository. findByDepthAndSiblingIndexAndContent_Title(
                 reportDto.getDepth(), reportDto.getSiblingIndex(), reportDto.getTitle()
             ).orElseThrow(() -> new IllegalArgumentException("신고할 글이 없음"));
         
-        // 신고내용 db에 저장
         Report report = new Report(reportDto.getBody(), target);
         reportRepository.save(report);
     	
@@ -46,12 +43,11 @@ public class ReportService {
         }
     }
     
-    // 메일보내기메소드.
     private void sendEmailToAdmin(String adminEmail, Report report) {
         SimpleMailMessage message = new SimpleMailMessage();
 
         try {
-            message.setFrom("loghelix223@gmail.com");	// 여기고치기.
+            message.setFrom("loghelix223@gmail.com");
             message.setTo(adminEmail);
             message.setSubject("[신고 접수] 새로운 신고가 도착했습니다.");
             message.setText("""

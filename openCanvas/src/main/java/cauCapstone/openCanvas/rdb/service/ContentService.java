@@ -11,7 +11,6 @@ import cauCapstone.openCanvas.rdb.dto.FirstContentDto;
 import cauCapstone.openCanvas.rdb.dto.ResCommentDto;
 import cauCapstone.openCanvas.rdb.dto.SimpleWritingDto;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
-import cauCapstone.openCanvas.rdb.entity.Comment;
 import cauCapstone.openCanvas.rdb.entity.CommentLike;
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Cover;
@@ -19,7 +18,6 @@ import cauCapstone.openCanvas.rdb.entity.Like;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
 import cauCapstone.openCanvas.rdb.entity.User;
 import cauCapstone.openCanvas.rdb.repository.CommentLikeRepository;
-import cauCapstone.openCanvas.rdb.repository.CommentRepository;
 import cauCapstone.openCanvas.rdb.repository.ContentRepository;
 import cauCapstone.openCanvas.rdb.repository.CoverRepository;
 import cauCapstone.openCanvas.rdb.repository.LikeRepository;
@@ -38,8 +36,7 @@ public class ContentService {
 	private final CommentLikeRepository commentLikeRepository;
 	private final WritingRepository writingRepository;
 	
-	// ! 유저필요
-	// coverId를 받아서 Content를 리턴하는 메소드, Content가 없으면 새로 저장한다.
+	// Content가 아직 생성되지 않았다면 Cover를 기반으로 생성한다.
 	public ContentDto getContent(Long coverId, String email, boolean isView) {
         User user = userRepository.findByEmail(email)
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -47,29 +44,22 @@ public class ContentService {
 	    Content content = contentRepository.findByCoverId(coverId)
 	        .orElseGet(() -> {
 	        	
-	        	// 기존 Content가 없는 경우 Cover을 조회함.
 	            Cover cover = coverRepository.findById(coverId)
 	                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Cover입니다."));
 
-	            // Content 생성 및 저장
 	            Content newContent = new Content(cover);
 	            return contentRepository.save(newContent);
 	        });
 	    
-	    // 댓글을 찾음.
 	    Content conWithComments = contentRepository.findByIdWithComments(content.getId()); 
 	    
 	    if(isView) {
-		    // 조회수 +1 함.
 		    conWithComments.setView(conWithComments.getView() + 1);
 		    contentRepository.save(conWithComments);	
 	    }
 	    
-	    
-	    // 좋아요 갯수를 찾음.
 	    int likeNum = contentRepository.countLikesById(conWithComments.getId());
 	    
-	    // 유저 본인이 좋아요 또는 싫어요를 눌렀는지 확인하는 메소드.
 	    Optional<Like> like = likeRepository.findByUserIdAndContentId(user.getId(), conWithComments.getId());
 	    LikeType likeType = like.map((a) -> a.getLiketype()).orElse(null);
 	    
@@ -94,8 +84,6 @@ public class ContentService {
 	    
 	}
 	
-	// ! 유저필요
-    // 좋아요 또는 싫어요를 눌렀을때 토글하기 : 안눌렀던 것을 눌렀으면 기존에 눌렀던 것 찾아서 삭제후 안눌렀던거 추가
     @Transactional
     public boolean toggleLike(String email, Long coverId, LikeType newLikeType) {
         User user = userRepository.findByEmail(email)
@@ -112,19 +100,18 @@ public class ContentService {
         if (existingLikeOpt.isPresent()) {
             Like existingLike = existingLikeOpt.get();
 
-            // 1. 같은 타입을 또 누른 경우 → 삭제 (토글 취소)
+            // 같은 타입을 또 누른 경우 → 삭제 (토글 취소)
             if (existingLike.getLiketype() == newLikeType) {
                 likeRepository.delete(existingLike);
                 
                 return false;
             }
 
-            // 2. 다른 타입을 누른 경우 → 기존 삭제 후 새로 생성
+            // 다른 타입을 누른 경우 → 기존 삭제 후 새로 생성
             likeRepository.delete(existingLike);
 
         }
 
-        // 3. 아무것도 없거나 다른 거 눌렀던 경우 → 새로운 Like 저장
         Like newLike = new Like();
         newLike.setUser(userRepository.getReferenceById(user.getId()));
         newLike.setContent(contentRepository.getReferenceById(contentId));
@@ -157,9 +144,7 @@ public class ContentService {
     public void recommendSet(List<WritingDto> writingDto) {
     	
     }
-    
-    // 최종 content조회 메소드.
-    // 생성과 조회를 분리함.
+
     public FinalContentDto getFinalContentByCoverId(Long coverId) {
     	
 	    Content content = contentRepository.findByCoverId(coverId)

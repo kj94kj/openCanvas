@@ -1,7 +1,5 @@
 package cauCapstone.openCanvas.rdb.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cauCapstone.openCanvas.rdb.dto.ReqCommentDto;
-import cauCapstone.openCanvas.rdb.dto.ResCommentDto;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
 import cauCapstone.openCanvas.rdb.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,7 +53,7 @@ public class CommentController {
 
     @DeleteMapping("/delete")
     @Operation(summary = "댓글 삭제", description = "유저 본인이 쓴 댓글을 삭제한다, contentId, commentId가 필요하다,"
-    		+ "LIst<ResCommentDto>를 리턴함")
+    		+ "List<ResCommentDto>를 리턴함")
     public ResponseEntity<?> deleteComment(
             @RequestParam(name = "commentId") Long commentId,
             @RequestParam(name = "contentId") Long contentId) {

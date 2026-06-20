@@ -17,11 +17,10 @@ import lombok.Setter;
 		+ "신고할 내용과 신고할 글을 지정해줘서 보내면됨")
 public class ReportDto {
 	@Schema(description = "신고내용")
-	String body;	// 신고내용
+	String body;	
 	@Schema(description = "타임스탬프")
-	LocalDateTime time;	// 신고 시간
+	LocalDateTime time;	
 	
-	// 신고할 글의 제목과 버전
 	@Schema(description = "글 조각이 몇번째 이어쓰기인지")
 	private int depth;
 	@Schema(description = "같은 이어쓰기 순서에서 몇번째 글인지(최대2)")

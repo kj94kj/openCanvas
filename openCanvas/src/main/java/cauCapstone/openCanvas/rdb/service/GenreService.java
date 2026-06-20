@@ -18,7 +18,6 @@ import cauCapstone.openCanvas.rdb.repository.WritingRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
-// 태그추가하기
 @Service
 @RequiredArgsConstructor
 public class GenreService {
@@ -28,9 +27,10 @@ public class GenreService {
     private final CoverRepository coverRepository;
     private final WritingRepository writingRepository;
 
+    // 최초 작성자만 장르를 세팅 가능.
     @Transactional
 	public List<String> setGenre(String email, List<String> genres, Long contentId) {
-		// 처음글 쓴 유저인지 체크
+    	
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new IllegalArgumentException("Content not found"));
         
@@ -43,7 +43,7 @@ public class GenreService {
         }
 		
         for (String genreName : genres) {
-            // 이미 있는 장르인지 확인
+        	
             Genre genre = genreRepository.findByName(genreName)
                 .orElseGet(() -> {
                     Genre newGenre = new Genre();
@@ -63,7 +63,6 @@ public class GenreService {
 		
 	}
 	
-    // 모든 장르 목록 리턴
 	public List<String> getAllGenres(){
         return genreRepository.findAll()
                 .stream()
@@ -72,12 +71,10 @@ public class GenreService {
 	}
 	
 	public List<String> getGenre (Long contentId){
-		// content -> contentGenre -> Genre 로 이름알아내고 리턴
 	    return contentGenreRepository.findGenreNamesByContentId(contentId);
 	}
 	
 	public List<CoverDto> searchGenre(String genreName){
-		// 장르 이름으로 장르 엔티티 -> ContentGenre엔티티 -> content리스트 -> coverdto 리스트리턴
 	    return coverRepository.findCoverDtosByGenreName(genreName);
 		
 	}

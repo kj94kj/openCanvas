@@ -26,7 +26,7 @@ public class User {
 	@GeneratedValue
 	private Long id;
 	
-	private String nickname;	// 이메일과 똑같은 값으로 써도 괜찮음.
+	private String nickname;	// 현재는 이메일과 같은 값으로 쓰고있음.
 	private String email;
 	private String color;
 	
@@ -50,7 +50,6 @@ public class User {
 	private List<Like> likes = new ArrayList<>();
 	
 	
-	//TODO: 글 쓴 목록도 추가시켜야함.
 	@OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
 	private List<Writing> writings = new ArrayList<>();
 }

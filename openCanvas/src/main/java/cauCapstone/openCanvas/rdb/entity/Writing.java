@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// Content안의 글. 이어쓰기단위 
+// Content안의 글. 이어쓰기 단위로 구분되는 글 조각. 
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
@@ -27,16 +27,15 @@ public class Writing {
 	@GeneratedValue
 	private Long id;
 	
-	private int depth; //현재 이어쓰기 번째
-	private int siblingIndex; // 현재 이어쓰기 단계에서의 순번(2 이하로 하기)
+	private int depth; 
+	private int siblingIndex; 
 	
-	//FetchType.EAGER은 한단계의 연관관계만 보여주기 때문에 LAZY가 더 나음.
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "parent_id")
 	private Writing parent;
 	
 	@Column(columnDefinition = "TEXT")
-	private String body;	// 그냥 문장을 저장함.
+	private String body;
 	private LocalDateTime time;
 	
 	@ManyToOne(fetch = FetchType.LAZY)

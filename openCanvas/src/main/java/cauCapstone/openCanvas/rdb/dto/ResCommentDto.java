@@ -5,23 +5,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cauCapstone.openCanvas.rdb.entity.Comment;
-import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.LikeType;
-import cauCapstone.openCanvas.rdb.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// 백엔드에서 응답용 CommentDto
 @Getter 
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "응답용 댓글dto,"
-		+ "댓글id, 전체 글 관련 id(contentId), 유저 id(userId), 댓글 좋아요 관련 dto(commentLikeDtos), 댓글내용, 타임스탬프,"
-		+ "댓글의 좋아요수, 댓글의 싫어요수, 내가 댓글에 좋아요/싫어요를 눌렀는지를 필드에 담아서 응답함.")
+@Schema(description = """
+		댓글 응답 DTO.
+		댓글 내용, 작성자, 좋아요/싫어요 수, 현재 사용자의 댓글 좋아요 상태를 포함한다.
+		""")
 public class ResCommentDto {
 	@Schema(description = "댓글 id")
 	private Long id;

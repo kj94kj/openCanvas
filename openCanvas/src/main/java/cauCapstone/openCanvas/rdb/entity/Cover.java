@@ -16,10 +16,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// 캔버스 표지에 대한 엔티티
-// cover은 글을 쓰려는 시점에, content는 글을 쓴 시점에 처음으로 저장된다. 
-// 깊게 생각 안하면 cover, content 분리를 안해도 되지만 만약 글을 쓴 시점에 저장을 하게되면 글을 쓰는 중간에
-// 똑같은 roomId를 쓸 가능성이 있기 때문에 미리 cover를 저장하게됬다.
+// 작품의 표지에 대한 엔티티
+// 밖에서 보이는 작품 카드/표지/목록용 정보
 @NoArgsConstructor
 @Setter
 @Getter
@@ -34,9 +32,7 @@ public class Cover {
 	private String title;
 	private String coverImageUrl;
 	
-	// 부모가 삭제되면 자식도 같이 삭제됨.
-	// 내용
-	// 조회수는 Content 엔티티에서 참조해서쓴다.
+	// Content = 안으로 들어갔을 때의 작품 본체/상세 상태
 	@OneToOne(mappedBy = "cover", cascade = CascadeType.ALL)
 	private Content content;
 	
@@ -49,7 +45,6 @@ public class Cover {
 	private String roomId;
 	
 	@Column(name = "cover_limit")
-	
 	private Integer limit;
 	
 	public Cover(String title, String coverImageUrl, Integer limit) {
