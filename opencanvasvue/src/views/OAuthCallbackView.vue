@@ -17,7 +17,7 @@ onMounted(() => {
   if (accessToken) {
     localStorage.setItem('accessToken', accessToken)
 
-    router.push('/mypage')
+    router.push('/mainpage')
   } else {
     alert('토큰이 없습니다.')
     router.push('/')

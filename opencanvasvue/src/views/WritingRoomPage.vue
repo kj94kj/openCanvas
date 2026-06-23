@@ -1,49 +1,41 @@
 <template>
-  <div class="story-area" v-if="previousWritings.length > 0">
-    <div
-      v-for="writing in previousWritings"
-      :key="writing.writingId"
-      class="story-block"
-    >
-      <div class="story-meta">
-        {{ writing.depth }}-{{ writing.siblingIndex }}
-       / {{ writing.username }}
-      </div>
+  <main class="writing-room-page">
+    <section class="writing-shell">
+      <header class="story-header">
+        <h1>{{ chatRoom?.name || '이야기 이어쓰기' }}</h1>
+      </header>
 
-     <p class="story-body">
-        {{ writing.body }}
-      </p>
-    </div>
-  </div>
+      <section v-if="previousWritings.length > 0" class="story-area">
+        <article
+          v-for="writing in previousWritings"
+          :key="writing.writingId"
+          class="story-block"
+        >
+          <p class="story-body">
+            {{ writing.body }}
+          </p>
+        </article>
+      </section>
 
-  <div class="writing-room-page">
-    <h1>문서방</h1>
+      <section class="editor-paper">
+        <textarea
+          v-model="text"
+          :readonly="!isEditor"
+          class="writing-textarea"
+          :placeholder="isEditor ? '이어서 이야기를 써보세요' : '작성자가 이야기를 이어 쓰는 중입니다.'"
+          maxlength="2000"
+        />
 
-    <p>roomId: {{ roomId }}</p>
-    <p>모드: {{ isEditor ? '작성자' : '관전자' }}</p>
-    <p>연결 상태: {{ connected ? '연결됨' : '연결 안 됨' }}</p>
+        <div class="editor-footer">
+          <span class="char-count">{{ text.length }} / 2,000</span>
 
-    <textarea
-      v-model="text"
-      :readonly="!isEditor"
-      class="writing-textarea"
-      placeholder="내용을 입력하세요."
-    />
-
-    <div class="button-area">
-      <button @click="connectWebSocket" :disabled="connected">
-        연결
-      </button>
-
-      <button @click="disconnectWebSocket" :disabled="!connected">
-        연결 해제
-      </button>
-
-      <button @click="exitWritingRoom">
-        {{ isEditor ? '작성 완료' : '나가기' }}
-      </button>
-    </div>
-  </div>
+          <button class="exit-button" @click="exitWritingRoom">
+            {{ isEditor ? '작성종료' : '구경종료' }}
+          </button>
+        </div>
+      </section>
+    </section>
+  </main>
 </template>
 
 <script setup>
@@ -195,22 +187,143 @@ function disconnectWebSocket() {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+
 .writing-room-page {
-  padding: 24px;
+  min-height: 100vh;
+  padding: 52px 24px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 1) 0%, rgba(248, 248, 248, 1) 58%, rgba(244, 244, 244, 1) 100%);
+}
+
+.writing-shell {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 42px 54px 36px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.04);
+}
+
+.story-header {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.story-header h1 {
+  margin: 0;
+  color: #1f2933;
+  font-family: 'Gowun Batang', serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.story-area {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.story-block {
+  padding: 20px 26px;
+  border: 1px solid #e7e7e7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.story-body {
+  margin: 0;
+  color: #2f2f2f;
+  font-family: 'Gowun Batang', serif;
+  font-size: 17px;
+  line-height: 2;
+  white-space: pre-wrap;
+}
+
+.editor-paper {
+  min-height: 300px;
+  padding: 24px 26px 20px;
+  border: 1px solid #e4e4e4;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
 }
 
 .writing-textarea {
   width: 100%;
-  height: 400px;
-  margin-top: 16px;
-  padding: 16px;
-  font-size: 16px;
-  resize: vertical;
+  min-height: 230px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #222;
+  font-family: 'Gowun Batang', serif;
+  font-size: 17px;
+  line-height: 2;
 }
 
-.button-area {
-  margin-top: 16px;
+.writing-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.writing-textarea:read-only {
+  color: #555;
+}
+
+.editor-footer {
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.char-count {
+  color: #8b8b8b;
+  font-size: 14px;
+}
+
+.exit-button {
+  min-width: 124px;
+  height: 46px;
+  border: none;
+  border-radius: 6px;
+  background: #ff5f52;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.exit-button:hover {
+  background: #f24f43;
+}
+
+@media (max-width: 768px) {
+  .writing-room-page {
+    padding: 24px 14px;
+  }
+
+  .writing-shell {
+    padding: 28px 18px 24px;
+  }
+
+  .story-header h1 {
+    font-size: 26px;
+  }
+
+  .story-block {
+    padding: 18px;
+  }
+
+  .editor-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .exit-button {
+    width: 100%;
+  }
 }
 </style>
