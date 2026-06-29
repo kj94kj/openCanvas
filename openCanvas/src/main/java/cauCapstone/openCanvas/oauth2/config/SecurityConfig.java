@@ -113,7 +113,9 @@ public class SecurityConfig {
         
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173")); // 프론트엔드 주소
+        config.setAllowedOriginPatterns(List.of(
+        		"http://localhost:5173",
+        		"http://43.201.95.35")); // 프론트엔드 주소
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setExposedHeaders(List.of("Authorization", "Authorization-Refresh"));

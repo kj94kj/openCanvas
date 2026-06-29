@@ -27,7 +27,9 @@ public class WebSockConfig implements WebSocketMessageBrokerConfigurer {
     // 클라이언트가 연결할 STOMP 엔드포인트를 등록한다.
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-stomp").setAllowedOriginPatterns("http://localhost:5173") 
+        registry.addEndpoint("/ws-stomp").setAllowedOriginPatterns(
+        			"http://localhost:5173",
+        			"http://43.201.95.35") 
                 .withSockJS();	
     }
     
