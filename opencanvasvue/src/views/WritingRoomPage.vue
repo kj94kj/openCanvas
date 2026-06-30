@@ -94,12 +94,17 @@ function connectWebSocket() {
 
         console.log('받은 메시지:', body)
 
-        /**
-         * 관전자만 서버에서 받은 내용으로 textarea를 갱신한다.
-         * 작성자는 자기 textarea를 서버 메시지로 덮어쓰면 안 됨.
-         */
-        if (!isEditor.value) {
-          text.value = body.message
+        if (body.type === 'ROOMOUT') {
+          alert(body.message || '작성자가 작성을 종료했습니다.')
+
+          disconnectWebSocket()
+
+          router.push(`/content/${route.query.coverId || ''}`)
+          return
+        }
+
+      if (body.type === 'EDIT' && !isEditor.value) {
+        text.value = body.message
         }
       })
 
