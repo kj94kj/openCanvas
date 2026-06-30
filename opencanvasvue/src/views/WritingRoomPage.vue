@@ -95,6 +95,10 @@ function connectWebSocket() {
         console.log('받은 메시지:', body)
 
         if (body.type === 'ROOMOUT') {
+          if (isEditor.value) {
+            return
+          }
+
           alert(body.message || '작성자가 작성을 종료했습니다.')
 
           disconnectWebSocket()
