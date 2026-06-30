@@ -13,9 +13,11 @@ const router = useRouter()
 onMounted(() => {
   const params = new URLSearchParams(window.location.search)
   const accessToken = params.get('access_token')
+  const refreshToken = params.get('refresh_token')
 
   if (accessToken) {
     localStorage.setItem('accessToken', accessToken)
+    localStorage.setItem('refreshToken', refreshToken)  
 
     router.push('/mainpage')
   } else {

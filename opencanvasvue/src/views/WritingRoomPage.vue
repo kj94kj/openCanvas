@@ -79,7 +79,7 @@ function connectWebSocket() {
   }
 
   stompClient = new Client({
-    webSocketFactory: () => new SockJS('http://localhost:8080/ws-stomp'),
+    webSocketFactory: () => new SockJS('/ws-stomp'),
 
     connectHeaders: {
       token: `Bearer ${token}`

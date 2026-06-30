@@ -15,7 +15,7 @@ const routes = [
     component: HomeView
   },
   {
-    path: '/oauth2/callback',
+    path: '/auth/callback',
     component: OAuthCallbackView
   },
   {

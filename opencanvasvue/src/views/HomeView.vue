@@ -15,7 +15,7 @@
 <script setup>
 function loginWithGoogle() {
   window.location.href =
-    'http://localhost:8080/oauth2/authorization/google?redirect_uri=http://localhost:5173/oauth2/callback&mode=login'
+  'http://ec2-43-201-95-35.ap-northeast-2.compute.amazonaws.com/oauth2/authorization/google?redirect_uri=http://ec2-43-201-95-35.ap-northeast-2.compute.amazonaws.com/auth/callback&mode=login'
 }
 </script>
 

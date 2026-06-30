@@ -29,12 +29,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     @Override
     public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, HttpServletRequest request,
                                          HttpServletResponse response) {
-        System.out.println("=== saveAuthorizationRequest 호출 ===");
-        System.out.println("requestURI = " + request.getRequestURI());
-        System.out.println("authorizationRequest null? " + (authorizationRequest == null));
-    	
+ 
         if (authorizationRequest == null) {
-            System.out.println("authorizationRequest가 null이라 쿠키 삭제");
             CookieUtils.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
             CookieUtils.deleteCookie(request, response, REDIRECT_URI_PARAM_COOKIE_NAME);
             CookieUtils.deleteCookie(request, response, MODE_PARAM_COOKIE_NAME);
@@ -45,8 +41,6 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
                 OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
                 CookieUtils.serialize(authorizationRequest),
                 COOKIE_EXPIRE_SECONDS);
-        
-        System.out.println("oauth2_auth_request 쿠키 저장 시도 완료");
 
         String redirectUriAfterLogin = request.getParameter(REDIRECT_URI_PARAM_COOKIE_NAME);
         if (StringUtils.hasText(redirectUriAfterLogin)) {
