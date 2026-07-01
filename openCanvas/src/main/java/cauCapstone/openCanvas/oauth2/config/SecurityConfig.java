@@ -64,7 +64,8 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/**",
                                 "/ws-stomp/**",
-                                "/api/rooms/exit"
+                                "/api/rooms/exit",
+                                "/api/health"
                         ).permitAll()
                         
                         .requestMatchers(HttpMethod.GET,

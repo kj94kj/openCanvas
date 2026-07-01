@@ -57,4 +57,4 @@ jobs:
       - name: Check deployed API through frontend Nginx
         run: |
           sleep 40
-          curl -f "http://${{ secrets.FRONTEND_HOST }}/api/covers?page=0&size=10"
+          curl -f "http://${{ secrets.FRONTEND_HOST }}/api/health"
