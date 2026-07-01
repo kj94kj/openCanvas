@@ -1,0 +1,55 @@
+name: Frontend Deploy
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - "opencanvasvue/**"
+      - ".github/workflows/frontend-deploy.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: opencanvasvue
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Upload dist to frontend EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.FRONTEND_HOST }}
+          username: ubuntu
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          source: "opencanvasvue/dist/*"
+          target: "/home/ubuntu/opencanvas-deploy"
+          strip_components: 2
+          rm: true
+
+      - name: Deploy to Nginx directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FRONTEND_HOST }}
+          username: ubuntu
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          script: |
+            sudo rm -rf /var/www/opencanvas/*
+            sudo cp -r /home/ubuntu/opencanvas-deploy/* /var/www/opencanvas/
+            sudo chown -R www-data:www-data /var/www/opencanvas
+            sudo nginx -t
+            sudo systemctl reload nginx
