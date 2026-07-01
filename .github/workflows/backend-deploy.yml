@@ -39,6 +39,9 @@ jobs:
           script: |
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opencanvas:latest
 
+            mkdir -p /home/ubuntu/opencanvas-config
+            printf '%s' '${{ secrets.APPLICATION_YML_BASE64 }}' | base64 -d > /home/ubuntu/opencanvas-config/application.yml
+
             sudo docker rm -f opencanvas || true
 
             sudo docker run -d \
@@ -46,6 +49,7 @@ jobs:
               --network opencanvas-net \
               --restart unless-stopped \
               -p 8080:8080 \
+              -v /home/ubuntu/opencanvas-config/application.yml:/app/config/application.yml \
               -e SPRING_DATA_REDIS_HOST=redis \
               -e SPRING_DATA_REDIS_PORT=6379 \
               ${{ secrets.DOCKERHUB_USERNAME }}/opencanvas:latest
