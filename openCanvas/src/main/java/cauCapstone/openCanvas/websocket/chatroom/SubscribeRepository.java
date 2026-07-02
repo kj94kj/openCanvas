@@ -22,10 +22,17 @@ public class SubscribeRepository {
     private static final String DISCONNECT_PREFIX = "disconnect";
     private static final String LOCK_PREFIX = "lock:document:";
     
-    public void registerEditorSubject(String roomId, String subject) {
-    	String key = SESSION_PREFIX + "room:" +roomId + ":editorSubject";
-    	
-        redisTemplate.opsForValue().set(key, subject, Duration.ofDays(1));
+    // 중복방지 기능
+    public boolean registerEditorSubject(String roomId, String subject) {
+        String key = SESSION_PREFIX + "room:" + roomId + ":editorSubject";
+
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(
+            key,
+            subject,
+            Duration.ofDays(1)
+        );
+
+        return Boolean.TRUE.equals(success);
     }
     
     public void registerSubscribe(String roomId, String sessionId, String subject) {
@@ -69,6 +76,7 @@ public class SubscribeRepository {
     }
     
     // 3분동안 안들어오면(DISCONNECT) 나갔다고 판단하고, 편집자 권한 회수함.
+    // 독점방지 기능
     
     private String getDisconnectKey(String roomId, String subject) {
         return DISCONNECT_PREFIX + ":" + roomId + ":" + subject;

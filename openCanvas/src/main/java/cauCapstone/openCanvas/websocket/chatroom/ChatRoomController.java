@@ -39,35 +39,43 @@ public class ChatRoomController {
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인되지 않음");
         }
+        
+        try {
+            String email = (String) auth.getPrincipal();
 
-        String email = (String) auth.getPrincipal();
-        
-        String version;
-        
-        if(writingDto.getDepth() == 0) {
-        	version = "1.1";
-        }else {
-            int siblingIndex = writingService.checkWriting(
-            		writingDto.getDepth(),
-            		writingDto.getSiblingIndex(),
-            		writingDto.getTitle()
+            String version;
+
+            if (writingDto.getDepth() == 0) {
+                version = "1.1";
+            } else {
+                int siblingIndex = writingService.checkWriting(
+                        writingDto.getDepth(),
+                        writingDto.getSiblingIndex(),
+                        writingDto.getTitle()
+                );
+
+                version = (writingDto.getDepth() + 1) + "." + siblingIndex + "." + writingDto.getSiblingIndex();
+            }
+
+            ChatRoomRedisEntity chatRoom = chatRoomService.createChatRoom(
+                    roomId,
+                    writingDto.getTitle(),
+                    email,
+                    version
             );
 
-            version = (writingDto.getDepth() + 1) + "." + siblingIndex + "." + writingDto.getSiblingIndex();
+            List<WritingDto> history = writingService.getWritingsWithRoomId(chatRoom.getRoomId());
+
+            ChatRoomDto chatRoomDto = ChatRoomDto.fromEntity(chatRoom, history);
+
+            return ResponseEntity.ok(chatRoomDto);
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-
-        ChatRoomRedisEntity chatRoom = chatRoomService.createChatRoom(
-        	roomId,
-            writingDto.getTitle(),
-            email,
-            version
-        );
-
-        List<WritingDto> history = writingService.getWritingsWithRoomId(chatRoom.getRoomId());
-
-        ChatRoomDto chatRoomDto = ChatRoomDto.fromEntity(chatRoom, history);
-
-        return ResponseEntity.ok(chatRoomDto);
     }
     
     @GetMapping("/{roomId}/enter")

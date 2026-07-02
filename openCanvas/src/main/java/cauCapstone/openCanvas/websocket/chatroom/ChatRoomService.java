@@ -33,27 +33,41 @@ public class ChatRoomService {
                 );
 
         if (cover.getRoomType() == RoomType.COMPLETE) {
-            throw new IllegalArgumentException(
-                    "작성이 완료된 문서입니다."
-            );
+            throw new IllegalStateException("작성이 완료된 문서입니다.");
         }
-    	
-        ChatRoomRedisEntity chatRoom = ChatRoomRedisEntity.create(roomId, title, subject, version);
-    
-    	chatRoomRepository.createRoom(chatRoom);
         
-        subscribeRegistryService.registerEditorSubject(chatRoom.getRoomId(), subject);
+        if (cover.getRoomType() == RoomType.EDITING) {
+            throw new IllegalStateException("이미 작성 중인 문서입니다.");
+        }
         
-        // 리스너는 채팅방마다 1개가 필요하다고 한다(사용자별 1개가 아님).
-        ChannelTopic topic = new ChannelTopic(chatRoom.getRoomId());
-        redisMessageListener.addMessageListener(redisSubscriber, topic);
-        
-        // 문서방이 만들어지고나서 문서 편집 락을 걸기 때문에, 여기서 락을 걸지 않는다.
-        
-        cover.setRoomType(RoomType.EDITING);
-        coverRepository.save(cover);
-        
-        return chatRoom;
+        boolean editorRegistered =
+                subscribeRegistryService.registerEditorSubject(roomId, subject);
+
+        if (!editorRegistered) {
+            throw new IllegalStateException("이미 편집자가 존재합니다.");
+        }
+
+
+        try {
+            ChatRoomRedisEntity chatRoom =
+                    ChatRoomRedisEntity.create(roomId, title, subject, version);
+
+            chatRoomRepository.createRoom(chatRoom);
+
+            ChannelTopic topic = new ChannelTopic(chatRoom.getRoomId());
+            redisMessageListener.addMessageListener(redisSubscriber, topic);
+
+            cover.setRoomType(RoomType.EDITING);
+            coverRepository.save(cover);
+
+            return chatRoom;
+
+        } catch (RuntimeException e) {
+            subscribeRegistryService.removeEditorSubjectKey(roomId);
+            subscribeRegistryService.removeLockKey(roomId);
+            
+            throw e;
+        }
     }
     
     public String getStringVersion(List<Integer> versionList) {

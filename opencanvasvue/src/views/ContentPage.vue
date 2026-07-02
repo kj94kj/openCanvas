@@ -166,6 +166,10 @@ const writingButtonText = computed(() => {
       return '읽을 버전을 선택해 주세요'
     }
 
+    if (!selectedWriting.value) {
+      return '읽을 버전을 선택해 주세요'
+    }
+
     return '여기 부터 이어쓰기'
   }
 
@@ -367,8 +371,21 @@ async function enterAsEditor(roomId) {
         chatRoom: response.data
       }
     })
-  } catch (error) {
-    console.error(error)
+  }  catch (error) {
+  console.error(error)
+
+  if (error.response?.status === 409) {
+    alert(error.response?.data || '문서 상태가 변경되었습니다. 다시 글을 선택해주세요.')
+
+    await fetchContent()
+    await checkWriteStatus()
+
+    selectedWriting.value = null
+    selectedPath.value = []
+
+    return
+  }
+
     alert(error.response?.data || '작성자로 입장하지 못했습니다.')
   }
 }
