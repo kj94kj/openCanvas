@@ -12,14 +12,14 @@ public class SnapshotEntity implements Serializable {
     
     private String roomId;
     private String body;
-    private String num;
+    private String paragraphId;
     private long time;
     
-    public static SnapshotEntity makeSnapshot(String roomId, String body, String num, long time) {
+    public static SnapshotEntity makeSnapshot(String roomId, String body, String paragraphId, long time) {
         SnapshotEntity snapshot = new SnapshotEntity();
         snapshot.setRoomId(roomId);
         snapshot.setBody(body);
-        snapshot.setNum(num);
+        snapshot.setParagraphId(paragraphId);
         snapshot.setTime(time);
         return snapshot;
     }

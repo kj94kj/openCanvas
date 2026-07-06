@@ -1,10 +1,6 @@
 package cauCapstone.openCanvas.websocket.chatmessage;
 
-import java.time.LocalDateTime;
-
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,28 +29,10 @@ public class ChatMessage {
     private String subject;
     @Schema(description = "해당 블럭 내용")
     private String message; 
-    @Schema(description = "문서 내 블럭(너무 많은 메시지를 보낼 것을 고려해서 블럭으로 나눔) 번호", example = "3")
-    private String num;	
-    
+    @Schema(description = "문서 내 문단별로 부여하는 id, 전송을 문서 전체가 아닌 문단별로 해서 전송량을 줄임.")
+    private String paragraphId;	
+    @Schema(description = "새 문단을 삽입할 때 기준이 되는 앞 문단 id")
+    private String afterParagraphId;
     private long timestamp;
     
-    public ChatMessage(String roomId, MessageType type, String message) {
-        this.roomId = roomId;
-        this.type = type;
-        this.message = message;
-    }
-    
-    public ChatMessage(String roomId, MessageType type, String message, long timestamp) {
-        this.roomId = roomId;
-        this.type = type;
-        this.message = message;
-        this.timestamp = timestamp;
-    }
-    
-    public ChatMessage(String roomId, MessageType type, String subject, String num) {
-        this.roomId = roomId;
-        this.type = type;
-        this.subject = subject;
-        this.message = num;
-    }
 }

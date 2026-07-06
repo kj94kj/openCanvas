@@ -162,11 +162,11 @@ const writingButtonText = computed(() => {
   }
 
   if (contentInfo.value.roomType === 'AVAILABLE') {
-    if (!selectedWriting.value && writings.value.length > 0) {
-      return '읽을 버전을 선택해 주세요'
+    if (!selectedWriting.value && writings.value.length === 0) {
+      return '새로 쓰기'
     }
 
-    if (!selectedWriting.value) {
+    if (!selectedWriting.value && writings.value.length > 0) {
       return '읽을 버전을 선택해 주세요'
     }
 
@@ -375,7 +375,7 @@ async function enterAsEditor(roomId) {
   console.error(error)
 
   if (error.response?.status === 409) {
-    alert(error.response?.data || '문서 상태가 변경되었습니다. 다시 글을 선택해주세요.')
+    alert(error.response?.data || '버전을 다시 선택해주세요.')
 
     await fetchContent()
     await checkWriteStatus()
