@@ -65,12 +65,16 @@
 
   const connected = ref(false)
 
-  const paragraphs = ref([
-    {
-      paragraphId: createParagraphId(),
-      body: ''
-    }
-  ])
+  const paragraphs = ref(
+    isEditor.value
+      ? [
+          {
+            paragraphId: createParagraphId(),
+           body: ''
+          }
+       ]
+     : []
+  )
 
   const textareaRefs = ref([])
   const paragraphTimers = new Map()
@@ -109,7 +113,7 @@
 
     return isEditor.value
       ? '이어서 이야기를 써보세요'
-      : '작성자가 이야기를 이어 쓰는 중입니다.'
+      : ''
   }
 
   function connectWebSocket() {
