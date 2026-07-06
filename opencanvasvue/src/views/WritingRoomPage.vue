@@ -93,7 +93,7 @@
   })
 
   function createParagraphId() {
-    return `p-${crypto.randomUUID()}`
+    return `p-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   }
 
   function setTextareaRef(el, index) {
