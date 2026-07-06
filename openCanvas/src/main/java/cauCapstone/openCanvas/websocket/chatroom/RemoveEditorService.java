@@ -1,7 +1,5 @@
 package cauCapstone.openCanvas.websocket.chatroom;
 
-import java.util.Set;
-
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
 
@@ -65,7 +63,7 @@ public class RemoveEditorService {
         roomOutMessage.setType(ChatMessage.MessageType.ROOMOUT);
         roomOutMessage.setRoomId(roomId);
         roomOutMessage.setSubject(null);
-        roomOutMessage.setMessage("작성자가 작성을 마쳤습니다. 종료하기 버튼을 눌러주세요.");
+        roomOutMessage.setMessage("작성자가 작성을 마쳤습니다. 작품화면으로 돌아갑니다.");
 
         log.info("ROOMOUT publish. roomId={}", roomId);
 
