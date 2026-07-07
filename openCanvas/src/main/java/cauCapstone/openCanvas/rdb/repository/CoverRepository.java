@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.dto.CoverLikeCountProjection;
 import cauCapstone.openCanvas.rdb.entity.Cover;
 import cauCapstone.openCanvas.rdb.entity.RoomType;
 
@@ -31,29 +32,51 @@ public interface CoverRepository extends JpaRepository<Cover, Long>{
 		""")
 		Page<CoverDto> findAllOrderByLikeCountDesc(Pageable pageable);
     
-	@Query("""
-		    SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(c.id, c.title, c.coverImageUrl, c.time,
-		    COALESCE(ct.view, 0), COALESCE(COUNT(l), 0), c.roomType, c.roomId, c.limit)
-		    FROM Cover c
-		    LEFT JOIN c.content ct
-		    LEFT JOIN ct.likes l
-		    GROUP BY c.id, c.title, c.coverImageUrl, c.time,
-			        ct.view, c.roomType, c.roomId, c.limit
-		    ORDER BY ct.view DESC
-		""")
-		Page<CoverDto> findAllOrderByViewDesc(Pageable pageable);
+    @Query("""
+            SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(
+                c.id,
+                c.title,
+                c.coverImageUrl,
+                c.time,
+                COALESCE(ct.view, 0),
+                0L,
+                c.roomType,
+                c.roomId,
+                c.limit
+            )
+            FROM Cover c
+            LEFT JOIN c.content ct
+            ORDER BY c.id DESC
+        """)
+        Page<CoverDto> findAllByIdDescWithoutLikeCount(Pageable pageable);
     
     @Query("""
-    	    SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(c.id, c.title, c.coverImageUrl, c.time,
-    	    COALESCE(ct.view, 0), COALESCE(COUNT(l), 0), c.roomType, c.roomId, c.limit)
+            SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(
+                c.id,
+                c.title,
+                c.coverImageUrl,
+                c.time,
+                COALESCE(ct.view, 0),
+                0L,
+                c.roomType,
+                c.roomId,
+                c.limit
+            )
+            FROM Cover c
+            LEFT JOIN c.content ct
+            ORDER BY COALESCE(ct.view, 0) DESC
+        """)
+        Page<CoverDto> findAllByViewDescWithoutLikeCount(Pageable pageable);
+    
+    @Query("""
+    	    SELECT c.id AS coverId, COUNT(l) AS likeCount
     	    FROM Cover c
     	    LEFT JOIN c.content ct
     	    LEFT JOIN ct.likes l
-    		GROUP BY c.id, c.title, c.coverImageUrl, c.time,
-             ct.view, c.roomType, c.roomId, c.limit
-    	    ORDER BY c.id DESC
+    	    WHERE c.id IN :coverIds
+    	    GROUP BY c.id
     	""")
-    	Page<CoverDto> findAllWithLikeCountByIdDesc(Pageable pageable);
+    List<CoverLikeCountProjection> countLikesByCoverIds(@Param("coverIds") List<Long> coverIds);
     
     @Query("""
     	    SELECT new cauCapstone.openCanvas.rdb.dto.CoverDto(

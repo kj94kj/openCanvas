@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
 import cauCapstone.openCanvas.rdb.dto.SimpleWritingDto;
+import cauCapstone.openCanvas.rdb.dto.WritingAncestorProjection;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.entity.Writing;
 
@@ -44,6 +45,55 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
 		    ORDER BY w.depth ASC, w.siblingIndex ASC
 		""")
 		List<WritingDto> findAllDtosByContentTitle(@Param("title") String title);
+	
+	@Query(value = """
+		    WITH RECURSIVE ancestors AS (
+		        SELECT
+		            w.id AS id,
+		            w.body AS body,
+		            w.depth AS depth,
+		            w.parent_id AS parentId,
+		            w.sibling_index AS siblingIndex,
+		            w.time AS time,
+		            w.user_id AS userId
+		        FROM writings w
+		        JOIN contents c
+		          ON c.id = w.content_id
+		        WHERE c.title = :title
+		          AND w.depth = :depth
+		          AND w.sibling_index = :siblingIndex
+
+		        UNION ALL
+
+		        SELECT
+		            p.id AS id,
+		            p.body AS body,
+		            p.depth AS depth,
+		            p.parent_id AS parentId,
+		            p.sibling_index AS siblingIndex,
+		            p.time AS time,
+		            p.user_id AS userId
+		        FROM writings p
+		        JOIN ancestors a
+		          ON p.id = a.parentId
+		    )
+		    SELECT
+		        a.depth AS depth,
+		        a.siblingIndex AS siblingIndex,
+		        parent.sibling_index AS parentSiblingIndex,
+		        a.body AS body,
+		        a.time AS time,
+		        a.userId AS userId
+		    FROM ancestors a
+		    LEFT JOIN writings parent
+		      ON parent.id = a.parentId
+		    ORDER BY a.depth ASC
+		    """, nativeQuery = true)
+		List<WritingAncestorProjection> findAncestorsByTitle(
+		        @Param("title") String title,
+		        @Param("depth") int depth,
+		        @Param("siblingIndex") int siblingIndex
+		);
 	
     // 부모가 없는 루트 Writing은 parentIndex를 0으로 해준다.
 	@Query("""

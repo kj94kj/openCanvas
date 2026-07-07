@@ -87,6 +87,24 @@ public class WritingDto {
 		this.title = title;
 	}
 	
+	public WritingDto(
+	        int depth,
+	        int siblingIndex,
+	        Integer parentSiblingIndex,
+	        String body,
+	        LocalDateTime time,
+	        String title,
+	        Long userId
+	) {
+	    this.depth = depth;
+	    this.siblingIndex = siblingIndex;
+	    this.parentSiblingIndex = parentSiblingIndex;
+	    this.body = body;
+	    this.time = time;
+	    this.title = title;
+	    this.userId = userId;
+	}
+	
 	public WritingDto(String title) {
 		this.title = title;
 		

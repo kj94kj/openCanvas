@@ -13,10 +13,10 @@
 </template>
 
 <script setup>
-function loginWithGoogle() {
-  window.location.href =
-  'http://ec2-43-201-95-35.ap-northeast-2.compute.amazonaws.com/oauth2/authorization/google?redirect_uri=http://ec2-43-201-95-35.ap-northeast-2.compute.amazonaws.com/auth/callback&mode=login'
-}
+  function loginWithGoogle() {
+   window.location.href =
+     'http://ec2-43-201-95-35.ap-northeast-2.compute.amazonaws.com/oauth2/authorization/google?redirect_uri=http://ec2-43-201-95-35.ap-northeast-2.compute.amazonaws.com/auth/callback&mode=login'
+  }
 </script>
 
 <style scoped>

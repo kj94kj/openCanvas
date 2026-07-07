@@ -2,7 +2,9 @@ package cauCapstone.openCanvas.rdb.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
@@ -10,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.CoverDto;
+import cauCapstone.openCanvas.rdb.dto.CoverLikeCountProjection;
 import cauCapstone.openCanvas.rdb.dto.CoverRequestDto;
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Cover;
@@ -45,9 +48,11 @@ public class CoverService {
 	}
 	
 	public Page<CoverDto> showAllCovers(int page, int size){
-		Pageable pageable = PageRequest.of(page, size);
-		
-		return coverRepository.findAllWithLikeCountByIdDesc(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<CoverDto> coverPage = coverRepository.findAllByIdDescWithoutLikeCount(pageable);
+
+        return attachLikeCounts(coverPage);
 	}
 	
 	public Page<CoverDto> showAllCoversWithLikes(int page, int size){
@@ -57,9 +62,11 @@ public class CoverService {
 	}
 	
 	public Page<CoverDto> showAllCoversWithViews(int page, int size){
-		Pageable pageable = PageRequest.of(page, size);
-		
-		return coverRepository.findAllOrderByViewDesc(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<CoverDto> coverPage = coverRepository.findAllByViewDescWithoutLikeCount(pageable);
+
+        return attachLikeCounts(coverPage);
 	}
 	
     public void deleteCover(Long id, String email) {
@@ -89,5 +96,28 @@ public class CoverService {
     public RoomType getRoomType(Long coverId) {
         return coverRepository.findRoomTypeByCoverId(coverId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 cover가 없습니다. coverId = " + coverId));
+    }
+    
+    private Page<CoverDto> attachLikeCounts(Page<CoverDto> coverPage) {
+        List<Long> coverIds = coverPage.getContent().stream()
+                .map(CoverDto::getId)
+                .toList();
+
+        if (coverIds.isEmpty()) {
+            return coverPage;
+        }
+
+        Map<Long, Long> likeCountMap = coverRepository.countLikesByCoverIds(coverIds).stream()
+                .collect(Collectors.toMap(
+                        CoverLikeCountProjection::getCoverId,
+                        CoverLikeCountProjection::getLikeCount
+                ));
+
+        coverPage.getContent().forEach(coverDto -> {
+            Long likeCount = likeCountMap.getOrDefault(coverDto.getId(), 0L);
+            coverDto.setLikeCount(likeCount);
+        });
+
+        return coverPage;
     }
 }

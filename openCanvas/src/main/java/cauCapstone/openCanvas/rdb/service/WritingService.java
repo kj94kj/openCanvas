@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import cauCapstone.openCanvas.rdb.dto.ContentDto;
 import cauCapstone.openCanvas.rdb.dto.MyWritingCoverResponseDto;
+import cauCapstone.openCanvas.rdb.dto.WritingAncestorProjection;
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.entity.Content;
 import cauCapstone.openCanvas.rdb.entity.Role;
@@ -57,26 +58,30 @@ public class WritingService {
     // Wrting 리프노드에서 부모노드들을 전부 가져오는 역할: 리프노드는 실제 저장이 되있어야한다.
     @Transactional
     public List<WritingDto> getWritingWithParents(WritingDto writingDto) {
-    	List<WritingDto> allWritingDtos = new ArrayList<>();
-    	
-    	int curDepth = writingDto.getDepth();
-    	int curSiblingIndex = writingDto.getSiblingIndex();
-    	String title = writingDto.getTitle();
-    	
-    	while(curDepth >0) {
-            Writing current = writingRepository
-                    .findByDepthAndSiblingIndexAndContent_Title(curDepth, curSiblingIndex, title)
-                    .orElseThrow(() ->  new IllegalArgumentException("존재하지 않는 writing입니다."));
-                        
-                allWritingDtos.add(WritingDto.fromEntity(current, title));
-                
-                curDepth = curDepth - 1;
-                curSiblingIndex = (current.getParent() != null) ? current.getParent().getSiblingIndex() : -1;
-    	}
-    	
-        Collections.reverse(allWritingDtos);
-    	
-    	return allWritingDtos;
+        String title = writingDto.getTitle();
+
+        List<WritingAncestorProjection> ancestors =
+                writingRepository.findAncestorsByTitle(
+                        title,
+                        writingDto.getDepth(),
+                        writingDto.getSiblingIndex()
+                );
+
+        if (ancestors.isEmpty()) {
+            throw new IllegalArgumentException("존재하지 않는 writing입니다.");
+        }
+
+        return ancestors.stream()
+                .map(w -> new WritingDto(
+                        w.getDepth(),
+                        w.getSiblingIndex(),
+                        w.getParentSiblingIndex(),
+                        w.getBody(),
+                        w.getTime(),
+                        title,
+                        w.getUserId()
+                ))
+                .toList();
     }
     
     public Writing saveWriting(WritingDto writingDto) {

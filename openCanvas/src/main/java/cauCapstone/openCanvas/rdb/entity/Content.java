@@ -54,7 +54,7 @@ public class Content {
 	@Column
 	private String official;
 	
-	@OneToMany(mappedBy = "content", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+	@OneToMany(mappedBy = "content", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
 	private List<ContentGenre> genres = new ArrayList<>();
 	
 	public Content(Cover cover) {

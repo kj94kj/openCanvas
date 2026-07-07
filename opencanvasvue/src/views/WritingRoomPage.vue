@@ -70,7 +70,8 @@ const paragraphs = ref(
     ? [
         {
           paragraphId: createParagraphId(),
-          body: ''
+          body: '',
+          afterParagraphId: null
         }
       ]
     : []
@@ -125,6 +126,7 @@ function connectWebSocket() {
   }
 
   stompClient = new Client({
+    // 로컬일경우와 배포일경우 uri 다름.
     webSocketFactory: () => new SockJS('/ws-stomp'),
 
     connectHeaders: {
@@ -158,8 +160,6 @@ function connectWebSocket() {
 
           resizeAllTextareas()
 
-          // 관전자는 새 토막이 생겼을 때만 해당 토막으로 이동
-          // 기존 토막 수정 중에는 화면을 강제로 끌고 가지 않음
           if (result === 'created') {
             scrollToParagraph(body.paragraphId)
           }
@@ -200,14 +200,22 @@ function onEnterParagraph(index, event) {
 
   const currentParagraph = paragraphs.value[index]
 
+  if (!currentParagraph) {
+    return
+  }
+
+  // 핵심 1:
+  // Enter를 누른 현재 문단의 예약 전송을 취소하고,
+  // 현재 body 값을 즉시 전송한다.
+  flushParagraph(currentParagraph)
+
   const newParagraph = {
     paragraphId: createParagraphId(),
-    body: ''
+    body: '',
+    afterParagraphId: currentParagraph.paragraphId
   }
 
   paragraphs.value.splice(index + 1, 0, newParagraph)
-
-  publishParagraph(newParagraph, currentParagraph.paragraphId)
 
   nextTick(() => {
     const nextTextarea = textareaRefs.value[index + 1]
@@ -232,11 +240,26 @@ function scheduleParagraphPublish(paragraph) {
   }
 
   const timer = setTimeout(() => {
-    publishParagraph(paragraph)
+    publishParagraph(paragraph, paragraph.afterParagraphId ?? null)
     paragraphTimers.delete(paragraph.paragraphId)
   }, 700)
 
   paragraphTimers.set(paragraph.paragraphId, timer)
+}
+
+function flushParagraph(paragraph) {
+  if (!paragraph) {
+    return
+  }
+
+  const oldTimer = paragraphTimers.get(paragraph.paragraphId)
+
+  if (oldTimer) {
+    clearTimeout(oldTimer)
+    paragraphTimers.delete(paragraph.paragraphId)
+  }
+
+  publishParagraph(paragraph, paragraph.afterParagraphId ?? null)
 }
 
 function publishParagraph(paragraph, afterParagraphId = null) {
@@ -262,19 +285,29 @@ function publishParagraph(paragraph, afterParagraphId = null) {
 }
 
 function publishAllParagraphs() {
-  paragraphs.value.forEach((paragraph) => {
-    publishParagraph(paragraph)
+  paragraphs.value.forEach((paragraph, index) => {
+    const afterParagraphId =
+      paragraph.afterParagraphId ??
+      (index > 0 ? paragraphs.value[index - 1].paragraphId : null)
+
+    const oldTimer = paragraphTimers.get(paragraph.paragraphId)
+
+    if (oldTimer) {
+      clearTimeout(oldTimer)
+      paragraphTimers.delete(paragraph.paragraphId)
+    }
+
+    publishParagraph(paragraph, afterParagraphId)
   })
 }
 
 function applyParagraphMessage(body) {
-  // 기존 전체 본문 EDIT와의 임시 호환용
-  // paragraphId가 없는 EDIT가 오면 전체 본문 하나로 취급
   if (!body.paragraphId) {
     paragraphs.value = [
       {
         paragraphId: 'legacy-paragraph',
-        body: body.message ?? ''
+        body: body.message ?? '',
+        afterParagraphId: null
       }
     ]
     return 'created'
@@ -284,29 +317,31 @@ function applyParagraphMessage(body) {
     return paragraph.paragraphId === body.paragraphId
   })
 
-  // 이미 있는 문단이면 내용만 수정
   if (existingIndex !== -1) {
     paragraphs.value[existingIndex].body = body.message ?? ''
+
+    if (body.afterParagraphId) {
+      paragraphs.value[existingIndex].afterParagraphId = body.afterParagraphId
+    }
+
     return 'updated'
   }
 
-  // 없는 문단이면 새 문단으로 생성
   const newParagraph = {
     paragraphId: body.paragraphId,
-    body: body.message ?? ''
+    body: body.message ?? '',
+    afterParagraphId: body.afterParagraphId ?? null
   }
 
   const afterIndex = paragraphs.value.findIndex((paragraph) => {
     return paragraph.paragraphId === body.afterParagraphId
   })
 
-  // afterParagraphId를 못 찾으면 일단 맨 뒤에 추가
   if (afterIndex === -1) {
     paragraphs.value.push(newParagraph)
     return 'created'
   }
 
-  // afterParagraphId 뒤에 삽입
   paragraphs.value.splice(afterIndex + 1, 0, newParagraph)
   return 'created'
 }
@@ -351,11 +386,24 @@ function clearParagraphTimers() {
   paragraphTimers.clear()
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 async function exitWritingRoom() {
   try {
     if (isEditor.value) {
-      clearParagraphTimers()
+      // 핵심 2:
+      // 종료 시점에 남아 있는 예약 전송을 취소만 하지 않고,
+      // 현재 paragraphs 전체를 즉시 전송한다.
       publishAllParagraphs()
+
+      // WebSocket publish 직후 바로 exit API를 때리면
+      // 서버에서 exit이 먼저 처리될 수 있으므로 아주 짧게 양보한다.
+      // 완전한 정석은 exit API body로 paragraphs 전체를 보내는 방식이다.
+      await sleep(300)
     }
 
     await api.post('/api/rooms/exit', null, {
@@ -452,19 +500,14 @@ function disconnectWebSocket() {
 .paragraph-editor {
   display: flex;
   flex-direction: column;
-
-  /* 문단 사이 간격 줄이기 */
   gap: 0;
 }
 
 .writing-textarea {
   width: 100%;
-
-  /* 짧은 문단이 과하게 커 보이지 않게 조정 */
   min-height: 1.75em;
   padding: 0;
   margin: 0;
-
   overflow: hidden;
   border: none;
   outline: none;
