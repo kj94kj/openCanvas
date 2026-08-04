@@ -76,7 +76,6 @@ public class SubscribeRepository {
     }
     
     // 3분동안 안들어오면(DISCONNECT) 나갔다고 판단하고, 편집자 권한 회수함.
-    // 독점방지 기능
     
     private String getDisconnectKey(String roomId, String subject) {
         return DISCONNECT_PREFIX + ":" + roomId + ":" + subject;
@@ -97,9 +96,7 @@ public class SubscribeRepository {
         redisTemplate.delete(key);
     }
     
-    // 편집자 락 키
-    // 30분동안 동작 없으면 편집자 락 키를 회수함.
-    
+    // 중복방지, 독점방지
     private String getLockKey(String roomId) {
         return LOCK_PREFIX + roomId;
     }
@@ -109,11 +106,15 @@ public class SubscribeRepository {
     }
 
     public void setLock(String roomId, String subject) {
-        redisTemplate.opsForValue().set(getLockKey(roomId), subject, Duration.ofMinutes(30));
+    	redisTemplate.opsForValue().setIfAbsent(
+    	        getLockKey(roomId),
+    	        subject,
+    	        Duration.ofMinutes(30)
+    	    );
     }
 
-    public void extendLock(String roomId, String subject) {
-        redisTemplate.opsForValue().set(getLockKey(roomId), subject, Duration.ofMinutes(30));
+    public void extendLock(String roomId) {
+        redisTemplate.expire(getLockKey(roomId), Duration.ofMinutes(30));
     }
     
     public void removeLockKey(String roomId) {

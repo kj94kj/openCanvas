@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -39,20 +40,54 @@ public class StompHandler implements ChannelInterceptor{
         if (StompCommand.CONNECT == accessor.getCommand()) {
 
             try {
-            	String rawToken = accessor.getFirstNativeHeader("token");
-            	if (rawToken != null && rawToken.startsWith("Bearer ")) {
-            	    rawToken = rawToken.substring(7);
-            	}
+                String rawToken = accessor.getFirstNativeHeader("token");
 
-            	if (rawToken != null && !rawToken.isBlank()) {
-            	    Claims claims = jwtTokenizer.verifySignature(rawToken, base64EncodedSecretKey);
-            	    String subject = claims.getSubject();
-            	    String sessionId = accessor.getSessionId();
-            	    
-            	    sessionRegistryService.registerSession(sessionId, subject);
-            	}
+                if (rawToken == null || rawToken.isBlank()) {
+                    throw new MessageDeliveryException(
+                            message,
+                            new IllegalArgumentException("Access Token이 없습니다.")
+                    );
+                }
+
+                if (rawToken.startsWith("Bearer ")) {
+                    rawToken = rawToken.substring(7);
+                }
+
+                Claims claims = jwtTokenizer.verifySignature(
+                        rawToken,
+                        base64EncodedSecretKey
+                );
+
+                String subject = claims.getSubject();
+                String sessionId = accessor.getSessionId();
+
+                if (subject == null || subject.isBlank()) {
+                    throw new MessageDeliveryException(
+                            message,
+                            new IllegalArgumentException(
+                                    "토큰에 사용자 식별 정보가 없습니다."
+                            )
+                    );
+                }
+
+                if (sessionId == null) {
+                    throw new MessageDeliveryException(
+                            message,
+                            new IllegalStateException(
+                                    "WebSocket 세션 ID가 없습니다."
+                            )
+                    );
+                }
+
+                sessionRegistryService.registerSession(sessionId, subject);
+
+            } catch (MessageDeliveryException e) {
+                log.warn("STOMP 연결 인증 실패: {}", e.getMessage());
+                throw e;
+
             } catch (Exception e) {
-                log.error("Error while verifying token", e);
+                log.warn("STOMP JWT 검증 실패", e);
+                throw new MessageDeliveryException(message, e);
             }
 
         }else if (StompCommand.SUBSCRIBE == accessor.getCommand()) {

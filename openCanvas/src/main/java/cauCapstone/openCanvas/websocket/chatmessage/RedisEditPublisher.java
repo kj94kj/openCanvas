@@ -50,6 +50,7 @@ public class RedisEditPublisher {
             }
 
             subscribeRepository.setLock(roomId, subject);
+            subscribeRepository.removeDisconnectKey(roomId, subject);
 
         } else {
 
@@ -58,7 +59,7 @@ public class RedisEditPublisher {
             }
 
             // 편집이 계속되는 동안 락이 만료되지 않도록 TTL을 갱신한다.
-            subscribeRepository.extendLock(roomId, subject);
+            subscribeRepository.extendLock(roomId);
         }
 
         try {

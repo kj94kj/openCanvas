@@ -77,7 +77,7 @@ public class SnapshotRepository {
             orderListOps.rightPush(orderKey, paragraphId);
         }
     }
-
+    
     public List<SnapshotEntity> findSnapshots(String roomId) {
         String snapshotKey = snapshotKey(roomId);
         String orderKey = orderKey(roomId);
@@ -88,19 +88,18 @@ public class SnapshotRepository {
             return List.of();
         }
 
-        List<SnapshotEntity> snapshots = new ArrayList<>();
+        List<SnapshotEntity> snapshots =
+                hashOps.multiGet(snapshotKey, paragraphIds);
 
-        for (String paragraphId : paragraphIds) {
-            SnapshotEntity snapshot = hashOps.get(snapshotKey, paragraphId);
-
-            if (snapshot != null) {
-                snapshots.add(snapshot);
-            }
+        if (snapshots == null) {
+            return List.of();
         }
 
-        return snapshots;
+        return snapshots.stream()
+                .filter(Objects::nonNull)
+                .toList();
     }
-
+    
     public void deleteSnapshots(String roomId) {
         snapshotRedisTemplate.delete(snapshotKey(roomId));
         stringRedisTemplate.delete(orderKey(roomId));
