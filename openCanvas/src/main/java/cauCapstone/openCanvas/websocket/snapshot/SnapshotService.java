@@ -106,4 +106,40 @@ public class SnapshotService {
             })
             .collect(Collectors.toList());
     }
+    
+    public List<ParagraphSnapshotDto> getRoomEntrySnapshots(
+            String roomId
+    ) {
+        List<SnapshotEntity> snapshots =
+                snapshotRepository.findSnapshots(roomId);
+
+        if (snapshots == null || snapshots.isEmpty()) {
+            return List.of();
+        }
+
+        List<ParagraphSnapshotDto> result =
+                new java.util.ArrayList<>(snapshots.size());
+
+        for (int i = 0; i < snapshots.size(); i++) {
+            SnapshotEntity snapshot = snapshots.get(i);
+
+            String afterParagraphId =
+                    i == 0
+                            ? null
+                            : snapshots.get(i - 1)
+                                    .getParagraphId();
+
+            result.add(
+                    new ParagraphSnapshotDto(
+                            snapshot.getParagraphId(),
+                            snapshot.getBody() == null
+                                    ? ""
+                                    : snapshot.getBody(),
+                            afterParagraphId
+                    )
+            );
+        }
+
+        return result;
+    }
 }

@@ -2,6 +2,8 @@ package cauCapstone.openCanvas.websocket.chatroom;
 
 import cauCapstone.openCanvas.rdb.dto.WritingDto;
 import cauCapstone.openCanvas.rdb.service.WritingService;
+import cauCapstone.openCanvas.websocket.snapshot.ParagraphSnapshotDto;
+import cauCapstone.openCanvas.websocket.snapshot.SnapshotService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +24,7 @@ public class ChatRoomController {
     private final WritingService writingService;
     private final ChatRoomService chatRoomService;
     private final EditAuthorityService editAuthorityService;
-    // private final SnapshotService snapshotService;
+    private final SnapshotService snapshotService;
 
     @PostMapping("/{roomId}/create")
     @Operation(
@@ -121,10 +123,14 @@ public class ChatRoomController {
             ChatRoomDto chatRoomDto =
                     ChatRoomDto.fromEntity(chatRoom, history);
 
+            List<ParagraphSnapshotDto> snapshots =
+                    snapshotService.getRoomEntrySnapshots(roomId);
+            
             ChatRoomEnterResponse response =
                     new ChatRoomEnterResponse(
                             chatRoomDto,
-                            role.name()
+                            role.name(),
+                            snapshots
                     );
 
             return ResponseEntity.ok(response);

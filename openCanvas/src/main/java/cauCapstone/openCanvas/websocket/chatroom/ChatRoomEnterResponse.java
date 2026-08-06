@@ -1,5 +1,8 @@
 package cauCapstone.openCanvas.websocket.chatroom;
 
+import java.util.List;
+
+import cauCapstone.openCanvas.websocket.snapshot.ParagraphSnapshotDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -9,4 +12,5 @@ public class ChatRoomEnterResponse {
 
     private ChatRoomDto room;
     private String role;
+    private List<ParagraphSnapshotDto> snapshots;
 }

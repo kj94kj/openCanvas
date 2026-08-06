@@ -110,20 +110,47 @@ function getPlaceholder(index) {
 }
 
 async function resolveRoomRole() {
+  const token =
+    localStorage.getItem('accessToken')
+
   const response = await api.post(
-    `/api/rooms/${roomId}/enter`
+    `/api/rooms/${roomId}/enter`,
+    null,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
   )
 
   const roomData = response.data.chatRoom
   const role = response.data.role
+  const snapshots =
+    response.data.snapshots ?? []
 
   chatRoom.value = roomData
-  previousWritings.value = roomData?.writings ?? []
+  previousWritings.value =
+    roomData?.writings ?? []
 
   isEditor.value = role === 'EDITOR'
   roleReady.value = true
 
-  if (isEditor.value && paragraphs.value.length === 0) {
+  // 서버가 반환한 문단 순서와 연결 관계 복원
+  paragraphs.value = snapshots.map(
+    snapshot => ({
+      paragraphId: snapshot.paragraphId,
+      body: snapshot.body ?? '',
+      afterParagraphId:
+        snapshot.afterParagraphId ?? null
+    })
+  )
+
+  // 신규 방에는 아직 스냅샷이 없으므로
+  // 편집자에게만 첫 문단 생성
+  if (
+    isEditor.value &&
+    paragraphs.value.length === 0
+  ) {
     paragraphs.value.push({
       paragraphId: createParagraphId(),
       body: '',
