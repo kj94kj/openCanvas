@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class ChatRoomController {
 
     private final WritingService writingService;
     private final ChatRoomService chatRoomService;
+    private final EditAuthorityService editAuthorityService;
     // private final SnapshotService snapshotService;
 
     @PostMapping("/{roomId}/create")
@@ -78,36 +80,69 @@ public class ChatRoomController {
         }
     }
     
-    @GetMapping("/{roomId}/enter")
+    @PostMapping("/{roomId}/enter")
     @Operation(
             summary = "문서방 참여 정보 조회",
             description = """
-                    구독자로 참여할 문서방의 정보와 기존 글 이력을 조회합니다.
-                    조회 이후 별도로 WebSocket에 연결하고 문서방 토픽을 구독해야 합니다.
+                    문서방 정보, 기존 글 이력과 현재 사용자의 역할을 조회합니다.
+                    기존 편집자가 재접속한 경우 편집 락을 복구하고
+                    disconnect 키를 제거합니다.
+            		WebSocket 연결은 별도로 진행해야 합니다.
                     """
     )
-    public ResponseEntity<?> enterRoomAsSubscriber(@PathVariable(name = "roomId") String roomId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인되지 않음");
+    public ResponseEntity<?> enterRoom(
+            @PathVariable(name = "roomId") String roomId,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인되지 않음");
         }
 
-        ChatRoomRedisEntity chatRoom = chatRoomService.findRoomById(roomId);
-        
-        if (chatRoom == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 roomId입니다.");
+        try {
+            String subject = authentication.getName();
+
+            ChatRoomRedisEntity chatRoom =
+                    chatRoomService.findRoomById(roomId);
+
+            if (chatRoom == null) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body("존재하지 않는 roomId입니다.");
+            }
+
+            EditAuthorityService.RoomRole role =
+                    editAuthorityService.enterRoom(roomId, subject);
+
+            List<WritingDto> history =
+                    writingService.getWritingsWithRoomId(roomId);
+
+            ChatRoomDto chatRoomDto =
+                    ChatRoomDto.fromEntity(chatRoom, history);
+
+            ChatRoomEnterResponse response =
+                    new ChatRoomEnterResponse(
+                            chatRoomDto,
+                            role.name()
+                    );
+
+            return ResponseEntity.ok(response);
+
+        } catch (AccessDeniedException e) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(e.getMessage());
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
         }
-
-        List<WritingDto> history = writingService.getWritingsWithRoomId(roomId);
-        
-
-        // TODO: 블록 단위 편집 구현 시 저장된 스냅샷을 입장 응답에 포함한다.
-        // 현재는 블럭번호 1만 사용함. 따라서 작성중인 문서의 전체 내용을 전송하므로 별도의 스냅샷 조회가 필요하지 않다.
-        // List<ChatMessage> snapshotList = snapshotService.giveSnapshot(roomId);
-
-        ChatRoomDto chatRoomDto = ChatRoomDto.fromEntity(chatRoom, history); 
-
-        return ResponseEntity.ok(chatRoomDto);
     }
 }

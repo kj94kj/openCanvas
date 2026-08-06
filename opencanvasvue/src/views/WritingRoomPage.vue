@@ -56,26 +56,19 @@ const route = useRoute()
 const router = useRouter()
 
 const roomId = route.params.roomId
-const mode = route.query.mode
 
-const isEditor = computed(() => mode === 'editor')
+const isEditor = ref(false)
+const roleReady = ref(false)
+const paragraphs = ref([])
 
-const chatRoom = history.state.chatRoom
-const previousWritings = ref(chatRoom?.writings ?? [])
+const initialChatRoom = window.history.state?.chatRoom ?? null
+
+const chatRoom = ref(initialChatRoom)
+const previousWritings = ref(
+  initialChatRoom?.writings ?? []
+)
 
 const connected = ref(false)
-
-const paragraphs = ref(
-  isEditor.value
-    ? [
-        {
-          paragraphId: createParagraphId(),
-          body: '',
-          afterParagraphId: null
-        }
-      ]
-    : []
-)
 
 const textareaRefs = ref([])
 const paragraphTimers = new Map()
@@ -90,7 +83,6 @@ let stompClient = null
 
 onMounted(() => {
   connectWebSocket()
-  resizeAllTextareas()
 })
 
 onUnmounted(() => {
@@ -117,6 +109,32 @@ function getPlaceholder(index) {
     : ''
 }
 
+async function resolveRoomRole() {
+  const response = await api.get(
+    `/api/rooms/${roomId}/enter`
+  )
+
+  const roomData = response.data.chatRoom
+  const role = response.data.role
+
+  chatRoom.value = roomData
+  previousWritings.value = roomData?.writings ?? []
+
+  isEditor.value = role === 'EDITOR'
+  roleReady.value = true
+
+  if (isEditor.value && paragraphs.value.length === 0) {
+    paragraphs.value.push({
+      paragraphId: createParagraphId(),
+      body: '',
+      afterParagraphId: null
+    })
+  }
+
+  await nextTick()
+  resizeAllTextareas()
+}
+
 function connectWebSocket() {
   const token = localStorage.getItem('accessToken')
 
@@ -133,38 +151,63 @@ function connectWebSocket() {
       token: `Bearer ${token}`
     },
 
-    onConnect: () => {
-      connected.value = true
-      console.log('웹소켓 연결 성공')
+    onConnect: async () => {
+     connected.value = true
+     console.log('웹소켓 연결 성공')
 
-      stompClient.subscribe(`/sub/chat/room/${roomId}`, (msg) => {
-        const body = JSON.parse(msg.body)
+      try {
+        await resolveRoomRole()
+     } catch (error) {
+       console.error('문서방 입장 실패:', error)
+        alert(
+          error.response?.data ||
+          '문서방에 입장하지 못했습니다.'
+        )
 
-        console.log('받은 메시지:', body)
+       disconnectWebSocket()
+       return
+     }
 
-        if (body.type === 'ROOMOUT') {
-          if (isEditor.value) {
-            return
+      if (!stompClient || !connected.value) {
+        return
+      }
+
+     stompClient.subscribe(
+        `/sub/chat/room/${roomId}`,
+        (msg) => {
+         const body = JSON.parse(msg.body)
+
+         console.log('받은 메시지:', body)
+
+         if (body.type === 'ROOMOUT') {
+           if (isEditor.value) {
+             return
+            }
+
+            alert(
+             body.message ||
+              '작성자가 작성을 종료했습니다.'
+            )
+
+           disconnectWebSocket()
+
+            router.push(
+              `/content/${route.query.coverId || ''}`
+            )
+           return
           }
 
-          alert(body.message || '작성자가 작성을 종료했습니다.')
+         if (body.type === 'EDIT' && !isEditor.value) {
+           const result = applyParagraphMessage(body)
 
-          disconnectWebSocket()
+            resizeAllTextareas()
 
-          router.push(`/content/${route.query.coverId || ''}`)
-          return
-        }
-
-        if (body.type === 'EDIT' && !isEditor.value) {
-          const result = applyParagraphMessage(body)
-
-          resizeAllTextareas()
-
-          if (result === 'created') {
-            scrollToParagraph(body.paragraphId)
-          }
-        }
-      })
+            if (result === 'created') {
+              scrollToParagraph(body.paragraphId)
+           }
+         }
+       }
+     )
     },
 
     onStompError: (frame) => {
