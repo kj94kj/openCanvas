@@ -110,7 +110,7 @@ function getPlaceholder(index) {
 }
 
 async function resolveRoomRole() {
-  const response = await api.get(
+  const response = await api.post(
     `/api/rooms/${roomId}/enter`
   )
 
