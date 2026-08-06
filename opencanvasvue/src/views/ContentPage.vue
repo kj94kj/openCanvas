@@ -174,7 +174,7 @@ const writingButtonText = computed(() => {
   }
 
   if (contentInfo.value.roomType === 'EDITING') {
-    return '작성중인 글 구경하기'
+    return '작성 중인 방 들어가기'
   }
 
   if (contentInfo.value.roomType === 'COMPLETE') {
@@ -321,7 +321,10 @@ async function enterWritingRoom() {
   const roomType = contentInfo.value.roomType
 
   if (roomType === 'AVAILABLE') {
-    if (!selectedWriting.value && writings.value.length > 0) {
+    if (
+      !selectedWriting.value &&
+      writings.value.length > 0
+    ) {
       alert('글을 선택해주세요.')
       return
     }
@@ -331,13 +334,22 @@ async function enterWritingRoom() {
   }
 
   if (roomType === 'EDITING') {
-    await enterAsViewer(roomId)
+    enterExistingRoom(roomId)
     return
   }
 
   if (roomType === 'COMPLETE') {
     alert('이미 완료된 글입니다.')
   }
+}
+
+function enterExistingRoom(roomId) {
+  router.push({
+    path: `/writing-room/${roomId}`,
+    query: {
+      coverId
+    }
+  })
 }
 
 async function enterAsEditor(roomId) {
@@ -363,7 +375,6 @@ async function enterAsEditor(roomId) {
     router.push({
       path: `/writing-room/${roomId}`,
       query: {
-        mode: 'editor',
         writingId: selectedWriting.value?.writingId,
         coverId: coverId
       },
@@ -387,26 +398,6 @@ async function enterAsEditor(roomId) {
   }
 
     alert(error.response?.data || '작성자로 입장하지 못했습니다.')
-  }
-}
-
-async function enterAsViewer(roomId) {
-  try {
-    const response = await api.get(`/api/rooms/${roomId}/enter`)
-
-    router.push({
-      path: `/writing-room/${roomId}`,
-      query: {
-        mode: 'viewer',
-        coverId: coverId
-      },
-      state: {
-        chatRoom: response.data
-      }
-    })
-  } catch (error) {
-    console.error(error)
-    alert(error.response?.data || '관전자로 입장하지 못했습니다.')
   }
 }
 
