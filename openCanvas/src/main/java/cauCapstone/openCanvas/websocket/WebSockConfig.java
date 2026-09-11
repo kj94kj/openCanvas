@@ -31,6 +31,10 @@ public class WebSockConfig implements WebSocketMessageBrokerConfigurer {
         			"http://localhost:5173",
         			"http://43.201.95.35") 
                 .withSockJS();	
+        
+        // 부하 테스트용 native WebSocket
+        registry.addEndpoint("/ws-test")
+                .setAllowedOriginPatterns("*");
     }
     
     @Override
