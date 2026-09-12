@@ -1,5 +1,6 @@
 package cauCapstone.openCanvas.websocket.chatmessage;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
